@@ -1,0 +1,7 @@
+# Sorties du build (générées par la CI)
+dist/
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+Thumbs.db

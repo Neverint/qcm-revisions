@@ -1,0 +1,688 @@
+## lin
+
+Q: Quelle commande affiche le chemin du dossier courant ?
++ `pwd`
+- `cd`
+- `ls -d`
+- `whereis .`
+E: `pwd` (print working directory) affiche le chemin absolu du dossier où tu te trouves.
+
+Q: Que représente `~` dans un chemin ?
++ Le dossier personnel de l'utilisateur courant
+- Le dossier racine de tout le système de fichiers
+- Le dossier où l'on se trouvait juste avant
+- Le dossier des fichiers temporaires partagés
+E: `~` vaut `$HOME`, par exemple `/home/ubuntu`. Le dossier précédent, c'est `cd -`.
+
+Q: Où se trouvent les fichiers de configuration système sous Linux ?
++ `/etc`
+- `/var`
+- `/usr/bin`
+- `/opt`
+E: `/etc` contient la configuration (ssh, nginx, fstab…). `/var` contient les données qui changent (logs, caches), `/usr/bin` les programmes.
+
+Q: Dans quel dossier trouve-t-on les journaux classiques (auth.log, syslog) ?
++ `/var/log`
+- `/etc/log`
+- `/usr/log`
+- `/proc/log`
+E: `/var/log` regroupe les fichiers de logs. Sur les systèmes avec systemd, on lit aussi le journal avec `journalctl`.
+
+Q: Que contient le dossier `/proc` ?
++ Un système de fichiers virtuel qui expose les processus et le noyau
+- Les programmes compilés et installés à la main par l'administrateur
+- Une copie de sauvegarde des fichiers de configuration du système
+- Les fichiers temporaires, effacés automatiquement au redémarrage
+E: `/proc` n'est pas sur le disque : le noyau le génère en direct. Exemples : `/proc/cpuinfo`, `/proc/meminfo`, `/proc/<PID>/`.
+
+Q: Quelle commande affiche les 20 dernières lignes d'un fichier et continue à suivre les ajouts ?
++ `tail -n 20 -f fichier`
+- `head -n 20 -f fichier`
+- `cat -n 20 fichier`
+- `less -20 fichier`
+E: `tail` lit la fin, `-n 20` le nombre de lignes, `-f` (follow) suit les nouvelles lignes en direct. Idéal pour un log.
+
+Q: Que fait `grep -ri "erreur" /var/log` ?
++ Cherche « erreur », sans tenir compte de la casse, dans tout le dossier et ses sous-dossiers
+- Supprime, dans chaque fichier du dossier et des sous-dossiers, les lignes contenant « erreur »
+- Cherche « erreur » en respectant la casse, dans les fichiers du dossier courant seulement
+- Remplace « erreur » par un texte vide dans tous les fichiers du dossier et des sous-dossiers
+E: `-r` = récursif, `-i` = insensible à la casse. Ajoute `-n` pour avoir les numéros de ligne, `-l` pour la seule liste des fichiers.
+
+Q: À quoi sert le caractère `|` (pipe) dans le shell ?
++ Envoyer la sortie d'une commande en entrée de la suivante
+- Lancer deux commandes en parallèle
+- Rediriger la sortie vers un fichier
+- Lancer la commande suivante seulement si la première réussit
+E: Exemple : `ps aux | grep nginx`. La redirection vers un fichier, c'est `>` ; enchaîner si succès, c'est `&&`.
+
+Q: Quelle est la différence entre `>` et `>>` ?
++ `>` écrase le fichier, `>>` ajoute à la fin
+- `>` ajoute à la fin, `>>` écrase le fichier
+- `>` redirige les erreurs, `>>` la sortie normale
+- Aucune, ce sont deux syntaxes équivalentes
+E: Piège classique vu dans le lab : `echo cle > ~/.ssh/authorized_keys` aurait effacé les clés existantes. Avec `>>`, on ajoute une ligne.
+
+Q: Que fait `2>/dev/null` à la fin d'une commande ?
++ Il jette les messages d'erreur
+- Il jette la sortie normale
+- Il enregistre les erreurs dans un fichier nommé null
+- Il relance la commande 2 fois
+E: Le descripteur 1 est la sortie standard, le 2 la sortie d'erreur. `/dev/null` est un « trou noir » qui avale tout. `&>/dev/null` jette les deux.
+
+Q: Quelle commande donne la version du noyau Linux ?
++ `uname -r`
+- `lsb_release -k`
+- `kernel --version`
+- `cat /etc/hostname`
+E: `uname -r` affiche la version du noyau (ex. 6.8.0-142-generic). `lsb_release -a` ou `cat /etc/os-release` donnent la distribution.
+
+Q: Quel fichier indique le nom et la version de la distribution ?
++ `/etc/os-release`
+- `/etc/issue.d`
+- `/proc/version_signature`
+- `/etc/distro`
+E: `/etc/os-release` contient NAME, VERSION_ID, ID… Il est lu par les scripts et outils (Ansible l'utilise pour ses facts).
+
+Q: Que fait la commande `which nginx` ?
++ Elle indique quel fichier exécutable sera lancé quand on tape `nginx`
+- Elle affiche la version de nginx installée et sa date de compilation
+- Elle liste tous les processus nginx en cours, avec leur PID
+- Elle installe nginx s'il n'est trouvé dans aucun dossier du `$PATH`
+E: `which` cherche dans les dossiers du `$PATH`. `type nginx` donne une info proche, y compris pour les alias et fonctions.
+
+Q: Que contient la variable `$PATH` ?
++ La liste des dossiers où le shell cherche les commandes
+- Le chemin absolu du dossier dans lequel on se trouve
+- La liste des fichiers ouverts par le shell en cours
+- Le chemin du dossier personnel de l'utilisateur connecté
+E: Les dossiers sont séparés par `:`. Un script dans `/usr/local/bin` se lance par son nom car ce dossier est dans le `$PATH`.
+
+Q: Quelle commande compresse un dossier `site/` en archive `site.tar.gz` ?
++ `tar -czf site.tar.gz site/`
+- `tar -xzf site.tar.gz site/`
+- `gzip -r site/ site.tar.gz`
+- `zip -t site.tar.gz site/`
+E: `c` = créer, `z` = gzip, `f` = fichier. Pour extraire : `tar -xzf site.tar.gz`. Pour lister : `tar -tzf`.
+
+Q: Que fait `find /var/log -name "*.log" -mtime +7` ?
++ Liste les fichiers .log de /var/log modifiés il y a plus de 7 jours
+- Supprime les fichiers .log de /var/log modifiés il y a plus de 7 jours
+- Liste les fichiers .log de /var/log modifiés dans les 7 derniers jours
+- Liste les fichiers .log de /var/log qui pèsent plus de 7 Mo
+E: `-mtime +7` = plus de 7 jours, `-mtime -7` = moins de 7 jours. On ajoute `-delete` pour supprimer, avec prudence.
+
+Q: Quel éditeur se quitte avec `:wq` ?
++ vim
+- nano
+- emacs
+- micro
+E: Dans vim : `i` pour écrire, `Échap` pour sortir du mode insertion, `:wq` pour enregistrer et quitter, `:q!` pour quitter sans enregistrer.
+
+Q: Que fait la commande `history | grep ssh` ?
++ Elle affiche les commandes déjà tapées qui contiennent « ssh »
+- Elle affiche l'historique des connexions SSH du serveur
+- Elle efface l'historique des commandes ssh
+- Elle liste les clés SSH
+E: `history` liste les commandes du shell. `Ctrl+R` fait une recherche interactive dans cet historique. Les connexions SSH, elles, se voient avec `last` ou dans les logs.
+
+Q: Que fait `ln -s /etc/nginx/sites-available/site /etc/nginx/sites-enabled/` ?
++ Crée un lien symbolique, ce qui active le site dans nginx
+- Copie le fichier de config, ce qui crée une seconde version du site
+- Déplace le fichier de config, ce qui désactive l'ancienne version
+- Crée un lien physique, ce qui duplique les données du site
+E: C'est le mécanisme Debian/Ubuntu : nginx ne lit que `sites-enabled/`. Activer un site = créer le lien, le désactiver = supprimer le lien.
+
+Q: Quelle différence entre un lien symbolique et un lien physique (hard link) ?
++ Le symbolique pointe vers un chemin ; le physique est un second nom pour le même inode
+- Le physique pointe vers un chemin ; le symbolique est un second nom pour le même inode
+- Le symbolique copie les données du fichier ; le physique n'est qu'un raccourci
+- Le physique peut viser un dossier ou un autre disque ; le symbolique ne le peut pas
+E: Si on supprime la cible, le lien symbolique devient cassé. Un hard link garde les données tant qu'un nom existe, mais il ne peut pas traverser deux systèmes de fichiers.
+
+Q: Que signifie « tout est fichier » sous Linux ?
++ Périphériques, processus et ressources du noyau sont accessibles comme des fichiers
+- Chaque commande du système est un simple fichier texte que l'on peut modifier
+- Les dossiers n'existent pas vraiment : ce sont des fichiers d'index cachés
+- Les programmes ne peuvent écrire leurs résultats que dans des fichiers sur disque
+E: Exemples : `/dev/sda` (le disque), `/dev/null`, `/proc/<PID>`. On les lit et les écrit avec les mêmes outils que des fichiers.
+
+Q: Quelle commande affiche l'utilisation de la mémoire vive en format lisible ?
++ `free -h`
+- `df -h`
+- `du -h`
+- `mem -h`
+E: `free -h` montre la RAM et le swap. Regarde la colonne `available` : c'est la mémoire vraiment disponible (le cache peut être libéré).
+
+Q: Que mesure le « load average » affiché par `uptime` ?
++ Le nombre moyen de processus actifs ou en attente sur 1, 5 et 15 minutes
+- Le pourcentage moyen de CPU utilisé sur 1, 5 et 15 minutes
+- La quantité moyenne de RAM occupée sur 1, 5 et 15 minutes
+- Le nombre moyen d'utilisateurs connectés sur 1, 5 et 15 minutes
+E: À comparer au nombre de cœurs (`nproc`) : un load de 4 sur une machine à 4 cœurs = pleine charge.
+
+Q: Comment arrêter proprement un processus de PID 1234 ?
++ `kill 1234` (SIGTERM), puis `kill -9 1234` seulement s'il ne répond pas
+- `kill -9 1234` directement, puis `kill 1234` pour nettoyer ce qui reste
+- `stop 1234`, puis `rm /proc/1234` si le processus tourne encore
+- `kill -HUP 1234`, qui arrête toujours le processus définitivement
+E: SIGTERM laisse le programme se fermer proprement (fichiers, connexions). SIGKILL (-9) le tue sans prévenir : risque de données corrompues.
+
+Q: Que fait `ps aux | grep nginx` ?
++ Liste tous les processus et garde ceux qui contiennent « nginx »
+- Démarre nginx et affiche le PID de son processus principal
+- Liste les ports ouverts par nginx et les connexions en cours
+- Liste les paquets installés dont le nom contient « nginx »
+E: `ps aux` = tous les processus de tous les utilisateurs. `pgrep -a nginx` fait la même chose plus proprement.
+
+Q: Quelle commande Debian/Ubuntu installe un paquet ?
++ `sudo apt install paquet`
+- `sudo dnf install paquet`
+- `sudo pacman -S paquet`
+- `sudo yum add paquet`
+E: apt = Debian/Ubuntu ; dnf = RHEL/Fedora ; pacman = Arch. Sache les reconnaître : beaucoup d'équipes font cohabiter Debian, Ubuntu et Arch.
+
+Q: Quelle est la différence entre `apt update` et `apt upgrade` ?
++ `update` rafraîchit la liste des paquets disponibles ; `upgrade` installe les nouvelles versions
+- `update` installe les mises à jour ; `upgrade` change de version de la distribution
+- Ce sont deux noms pour la même commande
+- `update` met à jour apt lui-même seulement
+E: On enchaîne souvent `sudo apt update && sudo apt upgrade`. Changer de version de distribution, c'est `do-release-upgrade` sur Ubuntu.
+
+Q: Quelle commande affiche la version installée et la version candidate d'un paquet ?
++ `apt-cache policy paquet`
+- `apt list --installed paquet --candidate`
+- `dpkg -S paquet`
+- `apt show-version paquet`
+E: `apt-cache policy` montre « Installed » et « Candidate » et les dépôts sources. `dpkg -S fichier` dit à quel paquet appartient un fichier.
+
+Q: Quelle commande trouve le paquet qui a installé `/usr/sbin/sshd` ?
++ `dpkg -S /usr/sbin/sshd`
+- `apt-cache policy /usr/sbin/sshd`
+- `which -p sshd`
+- `apt find /usr/sbin/sshd`
+E: `dpkg -S` cherche dans la base des paquets installés. Réponse attendue : `openssh-server`.
+
+Q: Que veut dire « Debian 13 Trixie » ?
++ La version 13 de Debian, dont le nom de code est Trixie
+- Une distribution dérivée de Debian 13, maintenue à part
+- Une édition de Debian 13 réservée aux serveurs
+- Le nom du noyau Linux livré avec Debian 13
+E: Chaque version Debian a un nom de personnage de Toy Story : 12 = Bookworm, 13 = Trixie. Proxmox VE 9 est basé sur Debian 13.
+
+Q: Quelle commande affiche les informations sur les disques et partitions sous forme d'arbre ?
++ `lsblk`
+- `lsusb`
+- `lspci`
+- `ls /dev -t`
+E: `lsblk` montre disques, partitions, LVM et points de montage. `blkid` ajoute les UUID et types de système de fichiers.
+
+Q: Quelle commande affiche le nom de la machine ?
++ `hostname`
+- `whoami`
+- `uname -u`
+- `id -n`
+E: `hostnamectl set-hostname nom` change le nom de façon permanente. `whoami` affiche l'utilisateur courant.
+
+Q: À quoi sert `man` ?
++ Afficher la documentation d'une commande
+- Gérer les comptes des utilisateurs
+- Lister les services et leur état
+- Monter un disque ou une partition
+E: `man ssh`, `man 5 sshd_config` (section 5 = formats de fichiers). Pendant un test, savoir chercher dans `man` est un vrai atout.
+
+Q: Quelle commande remplace « foo » par « bar » dans un fichier, directement dans le fichier ?
++ `sed -i 's/foo/bar/g' fichier`
+- `grep -r foo bar fichier`
+- `awk -i foo bar fichier`
+- `tr foo bar fichier`
+E: `s/ancien/nouveau/g` = substitution, `g` = toutes les occurrences de la ligne, `-i` = modifier le fichier sur place. Fais une copie avant.
+
+Q: Que fait `awk '{print $1}' access.log` ?
++ Affiche la première colonne de chaque ligne
+- Affiche la première ligne du fichier
+- Compte les lignes du fichier
+- Supprime la première colonne
+E: awk découpe chaque ligne en champs séparés par des espaces. Dans un log nginx, `$1` = l'adresse IP du client.
+
+Q: Comment compter les adresses IP les plus fréquentes d'un log web ?
++ `awk '{print $1}' access.log | sort | uniq -c | sort -nr | head`
+- `grep -c '^[0-9]' access.log | sort -nr | uniq -c | head`
+- `cut -d' ' -f1 access.log | uniq | wc -l | sort -nr | head`
+- `sort access.log | uniq -c | awk '{print $1}' | head`
+E: Le grand classique d'analyse de logs : extraire, trier, compter (`uniq -c` sur des lignes triées), retrier par nombre, garder le haut.
+
+## sysd
+
+Q: Quel est le rôle de systemd ?
++ C'est le premier processus (PID 1) : il démarre et gère les services
+- C'est le gestionnaire de paquets qui installe et met à jour les services
+- C'est le noyau Linux lui-même, chargé en mémoire au démarrage
+- C'est le pare-feu par défaut, qui filtre le trafic des services
+E: systemd lance les services (units), gère les dépendances, les timers, les logs (journald), le réseau (networkd), la résolution DNS (resolved)…
+
+Q: Quelle est la différence entre `systemctl start` et `systemctl enable` ?
++ `start` le lance maintenant ; `enable` le lance automatiquement au démarrage
+- `start` le lance automatiquement au démarrage ; `enable` le lance maintenant
+- `start` le lance une seule fois ; `enable` l'installe depuis les dépôts
+- Aucune : `enable` est l'ancien nom de `start` dans systemd
+E: `systemctl enable --now service` fait les deux d'un coup.
+
+Q: Quelle commande affiche l'état d'un service et ses dernières lignes de log ?
++ `systemctl status nginx`
+- `systemctl show-log nginx`
+- `service nginx log`
+- `journalctl status nginx`
+E: Tu y vois `active (running)` ou `failed`, le PID, la mémoire et ~10 lignes de log. Ajoute `-l` ou `--no-pager` pour les lignes complètes.
+
+Q: Quelle commande affiche les erreurs du service nginx depuis le dernier démarrage ?
++ `journalctl -u nginx -b -p err`
+- `journalctl nginx --errors`
+- `systemctl errors nginx`
+- `tail /var/log/systemd/nginx`
+E: `-u` = unit, `-b` = boot actuel, `-p err` = priorité erreur et plus grave. `-f` pour suivre en direct.
+
+Q: Que faut-il faire après avoir modifié un fichier `.service` ?
++ `sudo systemctl daemon-reload`
+- `sudo systemctl reboot`
+- `sudo systemctl reset`
+- Rien, systemd le détecte tout seul
+E: Sans `daemon-reload`, systemd continue d'utiliser l'ancienne version du fichier d'unit en mémoire.
+
+Q: Quelle est la différence entre `systemctl reload` et `systemctl restart` ?
++ `reload` relit la config sans couper le service ; `restart` l'arrête puis le relance
+- `restart` relit la config sans couper le service ; `reload` l'arrête puis le relance
+- `reload` redémarre toute la machine ; `restart` redémarre seulement le service
+- Aucune : ce sont deux noms pour la même action dans systemd
+E: Avec nginx, `nginx -t && systemctl reload nginx` : si la config est cassée, le reload est refusé et l'ancien nginx continue de servir.
+
+Q: Comment lister les services en échec ?
++ `systemctl --failed`
+- `systemctl list --errors`
+- `journalctl --failed`
+- `service --status-all failed`
+E: `systemctl list-units --failed` (ou `--failed`) : première commande à lancer quand un serveur « va mal » après un redémarrage.
+
+Q: Dans un timer systemd, que fait `OnCalendar=minutely` ?
++ Il lance le service associé toutes les minutes
+- Il lance le service une minute après le démarrage
+- Il arrête le service chaque minute
+- Il vérifie l'heure du système chaque minute
+E: Équivaut à `*-*-* *:*:00`. Teste une expression avec `systemd-analyze calendar "Mon..Fri 08:00"`.
+
+Q: Comment un timer systemd sait-il quel service lancer ?
++ Il lance le service du même nom (heartbeat.timer → heartbeat.service)
+- Il lance tous les services dont le nom commence comme le sien
+- Il lit le nom du service à lancer dans /etc/crontab
+- Il lance le dernier service modifié dans /etc/systemd/system
+E: On peut aussi le préciser avec `Unit=` dans la section `[Timer]`. On active le timer, pas le service.
+
+Q: Que signifie `Type=oneshot` dans un service ?
++ Le programme fait son travail puis se termine (pas de démon qui tourne en continu)
+- Le service ne peut être lancé qu'une fois dans la vie de la machine
+- Le service redémarre automatiquement s'il plante
+- Le service ne démarre qu'au boot
+E: Parfait pour un script lancé par un timer. Un serveur comme nginx est un service qui reste en fonctionnement.
+
+Q: Que signifie `*/5 * * * *` dans une crontab ?
++ Toutes les 5 minutes
+- À 5 heures du matin chaque jour
+- Le 5 de chaque mois
+- 5 fois par heure à des moments au hasard
+E: Les 5 champs : minute, heure, jour du mois, mois, jour de la semaine. `0 3 * * *` = tous les jours à 3 h 00.
+
+Q: Quels avantages un timer systemd a-t-il sur cron ?
++ Exécutions journalisées, testables à la main, prochaine exécution visible
+- Exécutions plus rapides, car les timers tournent directement dans le noyau
+- Fonctionnement possible sans systemd, sur n'importe quelle distribution
+- Aucun service à écrire : le timer contient directement la commande
+E: `systemctl list-timers` montre la dernière et la prochaine exécution ; `Persistent=true` rattrape une exécution manquée pendant que la machine était éteinte.
+
+Q: Où un administrateur doit-il placer ses propres fichiers d'unit systemd ?
++ `/etc/systemd/system/`
+- `/usr/lib/systemd/system/`
+- `/var/lib/systemd/`
+- `/proc/systemd/`
+E: `/usr/lib/systemd/system/` appartient aux paquets. `/etc/systemd/system/` est prioritaire et à toi. `systemctl edit service` crée un fichier de surcharge.
+
+Q: Quelle commande affiche l'espace disque occupé par le journal systemd ?
++ `journalctl --disk-usage`
+- `du -h /var/log/journald`
+- `systemctl journal-size`
+- `df --journal`
+E: Pour le réduire : `journalctl --vacuum-size=500M` ou `--vacuum-time=7d`. La limite permanente se règle dans `/etc/systemd/journald.conf`.
+
+Q: Quel outil fait tourner (archiver et compresser) les vieux fichiers de log ?
++ logrotate
+- logwatch
+- rsyslog
+- journalctl
+E: logrotate (lancé chaque jour par un timer) renomme, compresse et supprime les vieux logs selon les règles de `/etc/logrotate.d/`.
+
+Q: Quelle commande montre le temps de démarrage de chaque service ?
++ `systemd-analyze blame`
+- `systemctl boot-time`
+- `journalctl --boot-time`
+- `uptime -s`
+E: `systemd-analyze` donne la durée totale du boot, `blame` la liste des services les plus lents.
+
+## users
+
+Q: Que signifie `chmod 640 fichier` ?
++ Propriétaire : lecture et écriture ; groupe : lecture ; autres : rien
+- Propriétaire : tout ; groupe : lecture ; autres : écriture
+- Tout le monde peut lire, seul le propriétaire peut écrire
+- Propriétaire : lecture ; groupe : écriture ; autres : rien
+E: r = 4, w = 2, x = 1. 6 = rw-, 4 = r--, 0 = ---. Donc `rw-r-----`.
+
+Q: Que signifie `chmod 750` sur un dossier ?
++ Propriétaire : tout ; groupe : entrer et lister ; autres : rien
+- Tout le monde peut entrer, seul le propriétaire écrit
+- Propriétaire : lecture seule
+- Groupe : tout ; propriétaire : rien
+E: 7 = rwx, 5 = r-x, 0 = ---. Sur un dossier, x = le droit d'y entrer (cd).
+
+Q: Quels droits SSH exige-t-il sur `~/.ssh` et `authorized_keys` ?
++ Pas d'écriture pour le groupe ni les autres (700 et 600 recommandés)
+- Lecture et écriture pour tous (777), pour éviter tout blocage
+- Aucun droit, même pour le propriétaire : sshd lit en tant que root
+- Aucun : sshd ne vérifie jamais les droits de ces fichiers
+E: Avec StrictModes (actif par défaut), sshd refuse la clé si le dossier personnel, `~/.ssh` ou `authorized_keys` sont modifiables par le groupe ou les autres → `Permission denied (publickey)`. 700 et 600 sont la valeur sûre à retenir.
+
+Q: Pourquoi utiliser `usermod -aG sudo bob` et pas `usermod -G sudo bob` ?
++ Sans `-a`, bob perd tous ses autres groupes secondaires
+- `-a` est obligatoire pour le groupe sudo uniquement
+- `-a` rend le changement permanent
+- `-G` seul ne fonctionne pas sur Ubuntu
+E: `-a` = append (ajouter). `-G` seul remplace la liste des groupes secondaires.
+
+Q: Quelle commande affiche l'UID, le GID et les groupes d'un utilisateur ?
++ `id bob`
+- `who bob`
+- `groups -u bob`
+- `whoami bob`
+E: Exemple : `uid=1001(alice) gid=1001(alice) groups=1001(alice),27(sudo)`.
+
+Q: Quelle commande crée l'utilisateur alice avec son dossier personnel et bash comme shell ?
++ `sudo useradd -m -s /bin/bash alice`
+- `sudo useradd alice`
+- `sudo usermod -m alice`
+- `sudo adduser -s alice /bin/bash`
+E: `-m` crée `/home/alice`, `-s` fixe le shell. Sur Debian/Ubuntu, `adduser alice` est un assistant interactif qui fait tout.
+
+Q: Où sont stockés les mots de passe hachés des utilisateurs ?
++ `/etc/shadow`
+- `/etc/passwd`
+- `/etc/group`
+- `/root/.passwords`
+E: `/etc/passwd` est lisible par tous (comptes, UID, shell) ; `/etc/shadow` n'est lisible que par root et contient les hachés.
+
+Q: Comment modifier les règles sudo en toute sécurité ?
++ Avec `sudo visudo` (ou un fichier dans `/etc/sudoers.d/`)
+- En éditant `/etc/sudoers` avec nano directement
+- Avec `chmod 777 /etc/sudoers`
+- Avec `sudo passwd sudo`
+E: visudo vérifie la syntaxe avant d'enregistrer : une erreur dans sudoers peut te priver de sudo.
+
+Q: À quoi sert le bit SUID sur un exécutable (ex. `/usr/bin/passwd`) ?
++ Le programme s'exécute avec les droits de son propriétaire, pas de celui qui le lance
+- Le programme s'exécute avec les droits de celui qui le lance, jamais plus
+- Le fichier ne peut plus être supprimé, même par son propriétaire
+- Le programme est lancé automatiquement en arrière-plan à chaque démarrage
+E: `passwd` doit écrire dans `/etc/shadow`, d'où le SUID root. Les binaires SUID inattendus sont une cible classique d'escalade de privilèges : `find / -perm -4000`.
+
+Q: À quoi sert le « sticky bit » sur `/tmp` ?
++ Seul le propriétaire d'un fichier peut le supprimer, même si tous peuvent écrire
+- Les fichiers du dossier sont conservés après le redémarrage de la machine
+- Les fichiers du dossier sont chiffrés avec la clé de leur propriétaire
+- Personne, sauf root, ne peut créer de fichier dans le dossier
+E: Visible avec `ls -ld /tmp` : `drwxrwxrwt`, le `t` final est le sticky bit.
+
+Q: Avec un umask de 022, quels droits ont les nouveaux fichiers ?
++ 644 (rw-r--r--)
+- 755 (rwxr-xr-x)
+- 600 (rw-------)
+- 777 (rwxrwxrwx)
+E: Fichiers : 666 − 022 = 644. Dossiers : 777 − 022 = 755. Un umask plus strict (027) retire tout accès aux « autres ».
+
+Q: Quelle commande change le propriétaire et le groupe de tous les fichiers d'un dossier ?
++ `chown -R alice:alice dossier/`
+- `chmod -R alice dossier/`
+- `chgrp alice:alice dossier/`
+- `usermod -R alice dossier/`
+E: `-R` = récursif. Dans le lab, on l'a fait sur `/home/alice/.ssh` après l'avoir créé avec sudo (fichiers créés au nom de root).
+
+Q: Que permettent les ACL (`setfacl`) en plus des droits classiques ?
++ Donner des droits à un utilisateur ou un groupe précis, en plus des droits classiques
+- Chiffrer un fichier pour qu'un seul utilisateur puisse le lire
+- Cacher un fichier à tous les utilisateurs sauf à son propriétaire
+- Limiter la place qu'un utilisateur peut occuper dans un dossier
+E: Exemple : `setfacl -m u:bob:rx dossier`. On lit avec `getfacl`. Un `+` à la fin des droits dans `ls -l` signale une ACL.
+
+Q: Pourquoi interdire la connexion directe de root (même par clé) ?
++ Pour que chaque action soit faite par un compte nominatif, tracé, via sudo
+- Parce que le compte root ne peut techniquement pas utiliser de clé SSH
+- Parce que les sessions root sont plus lentes et consomment plus de RAM
+- Parce que Linux bloque root après sa première connexion distante
+E: Avec des comptes nominatifs + sudo, les logs disent qui a fait quoi. C'est une recommandation de l'ANSSI.
+
+Q: Quelle commande verrouille le compte de bob sans le supprimer ?
++ `sudo usermod -L bob`
+- `sudo userdel bob`
+- `sudo chmod 000 /home/bob`
+- `sudo passwd -d bob`
+E: `-L` verrouille le mot de passe. Pour bloquer aussi les clés SSH, on peut changer le shell en `/usr/sbin/nologin` ou expirer le compte (`usermod -e 1`).
+
+Q: Que montre la commande `last` ?
++ L'historique des connexions des utilisateurs
+- L'historique des commandes tapées dans le shell
+- La liste des derniers fichiers modifiés
+- La liste des derniers paquets installés
+E: `last` lit `/var/log/wtmp`. `lastb` montre les tentatives échouées. Utile en investigation après une alerte.
+
+## disk
+
+Q: Quelle est la différence entre `df` et `du` ?
++ `df` : espace par système de fichiers ; `du` : taille des fichiers d'un dossier
+- `du` : espace par système de fichiers ; `df` : taille des fichiers d'un dossier
+- `df` : fichiers supprimés encore ouverts ; `du` : fichiers en cours d'écriture
+- `df` : espace disque en temps réel ; `du` : espace au dernier démarrage
+E: `df -h` pour le constat global, `du -xh --max-depth=1 /var | sort -h` pour trouver le dossier qui pèse.
+
+Q: `df -h` affiche 100 % mais `du` ne trouve pas de gros fichier. Cause probable ?
++ Un fichier supprimé est encore ouvert par un processus
+- Les fichiers cachés ne sont pas comptés par `du`
+- Le cache de la mémoire vive déborde sur le disque
+- Le disque est en panne et renvoie de fausses valeurs
+E: Les données restent sur le disque tant qu'un processus tient le fichier. `lsof +L1` le montre ; redémarrer le service libère la place. Vu dans le lab M1.
+
+Q: Que vérifie `df -i` ?
++ Le nombre d'inodes utilisés et libres
+- La vitesse de lecture et d'écriture
+- Le nombre d'erreurs détectées sur le disque
+- La liste des partitions chiffrées
+E: Des millions de petits fichiers peuvent épuiser les inodes : le disque est « plein » alors que `df -h` montre de la place.
+
+Q: Dans LVM, quel est l'ordre des couches ?
++ Volume physique (PV) → Groupe de volumes (VG) → Volume logique (LV)
+- Volume logique (LV) → Volume physique (PV) → Groupe (VG)
+- Partition → LV → PV
+- VG → PV → LV
+E: Les disques deviennent des PV, regroupés dans un VG, dans lequel on découpe des LV (qu'on formate). Commandes : `pvs`, `vgs`, `lvs`.
+
+Q: Que fait `lvextend -r -L +10G /dev/vg0/data` ?
++ Agrandit le LV de 10 Go et agrandit aussi le système de fichiers
+- Agrandit le LV de 10 Go mais laisse le système de fichiers tel quel
+- Crée un nouveau LV de 10 Go dans le groupe de volumes vg0
+- Réduit le LV de 10 Go et rend l'espace au groupe de volumes
+E: `-r` (resize fs) évite d'oublier `resize2fs` ou `xfs_growfs` ensuite.
+
+Q: Pourquoi utiliser l'UUID plutôt que `/dev/sdb1` dans `/etc/fstab` ?
++ L'UUID ne change pas si l'ordre des disques change
+- L'UUID permet de monter la partition plus vite
+- fstab refuse les noms du type `/dev/sdb1`
+- L'UUID active le chiffrement de la partition
+E: Les noms `sdX` peuvent s'inverser après l'ajout d'un disque. `blkid` donne les UUID.
+
+Q: Que faut-il faire après avoir modifié `/etc/fstab` et avant de redémarrer ?
++ Tester avec `sudo mount -a`
+- Rien, c'est appliqué au prochain boot
+- `sudo systemctl restart fstab`
+- `sudo fsck /etc/fstab`
+E: Une erreur dans fstab peut bloquer le démarrage. `mount -a` monte tout ce qui est déclaré et révèle l'erreur tout de suite (puis `systemctl daemon-reload`).
+
+Q: Quel système de fichiers est le plus courant par défaut sur Debian et Ubuntu ?
++ ext4
+- NTFS
+- FAT32
+- HFS+
+E: ext4 est le choix par défaut. XFS est courant sur RHEL ; ZFS et Btrfs offrent snapshots et sommes de contrôle. NTFS = Windows, HFS+/APFS = macOS.
+
+Q: Que fait `fallocate -l 2G /var/tmp/big` ?
++ Réserve instantanément un fichier de 2 Go sur le disque
+- Crée un fichier de 2 Go rempli de données aléatoires
+- Limite /var/tmp à 2 Go
+- Libère 2 Go sur le disque
+E: Pratique pour simuler un disque qui se remplit (lab M1). `dd if=/dev/zero` fait pareil, plus lentement.
+
+Q: Quelle commande montre le détail de l'état SMART d'un disque ?
++ `smartctl -a /dev/sda`
+- `fdisk -s /dev/sda`
+- `lsblk -smart`
+- `df --health`
+E: Paquet `smartmontools`. Les secteurs réalloués ou en attente annoncent un disque qui va mourir. Réflexe utile avant de remplacer un OSD Ceph.
+
+Q: Comment voir les points de montage et leurs options (ro, noexec…) ?
++ `findmnt`
+- `lsblk -o`
+- `blkid -m`
+- `df -o`
+E: `findmnt` affiche un arbre lisible. Les options `nodev`, `nosuid`, `noexec` sur `/tmp` font partie du durcissement recommandé.
+
+## ssh
+
+Q: Dans une paire de clés SSH, quelle clé est copiée sur le serveur ?
++ La clé publique (`id_ed25519.pub`)
+- La clé privée (`id_ed25519`)
+- Les deux
+- Aucune, le serveur génère la sienne
+E: La clé publique va dans `~/.ssh/authorized_keys` du serveur. La clé privée ne quitte jamais ton poste.
+
+Q: Quel algorithme de clé SSH est recommandé aujourd'hui pour une nouvelle clé ?
++ ed25519
+- DSA
+- RSA 1024 bits
+- MD5
+E: `ssh-keygen -t ed25519` : clé courte, rapide et sûre. DSA et RSA 1024 sont dépassés.
+
+Q: Que faut-il lancer avant de recharger sshd après une modification ?
++ `sudo sshd -t`, en gardant une session ouverte
+- `sudo ssh -v localhost`, après avoir fermé les sessions
+- `sudo systemctl stop ssh`, puis `systemctl start ssh`
+- `sudo ssh-keygen -A`, pour régénérer les clés d'hôte
+E: Une faute de frappe peut empêcher sshd de redémarrer et te couper du serveur. La session ouverte sert de porte de secours.
+
+Q: Quelle commande affiche la configuration SSH réellement appliquée (tous fichiers fusionnés) ?
++ `sudo sshd -T`
+- `cat /etc/ssh/sshd_config`
+- `ssh -G localhost`
+- `systemctl cat ssh`
+E: `sshd -T` donne la config effective du serveur. `ssh -G hôte` fait l'équivalent côté client.
+
+Q: Sur Ubuntu, pourquoi un fichier `10-hardening.conf` dans `sshd_config.d/` l'emporte sur `50-cloud-init.conf` ?
++ Pour sshd, la première valeur lue gagne, et les fichiers sont lus par ordre alphabétique
+- Le fichier le plus récent gagne toujours
+- Le dernier fichier lu gagne toujours
+- Les fichiers numérotés en 10 sont prioritaires par convention Ubuntu
+E: L'`Include` est au début de `sshd_config` : `10-` est lu avant `50-` et avant le reste du fichier principal.
+
+Q: Que fait la ligne `PasswordAuthentication no` dans sshd ?
++ Interdit la connexion SSH par mot de passe
+- Supprime les mots de passe des comptes locaux
+- Interdit l'utilisation de sudo par mot de passe
+- Interdit la connexion SSH par clé publique
+E: À combiner avec `KbdInteractiveAuthentication no`. Les mots de passe locaux existent toujours (utiles pour sudo).
+
+Q: Que fait `AllowUsers ubuntu alice` dans sshd ?
++ Seuls ces deux comptes peuvent se connecter en SSH
+- Ces deux comptes deviennent administrateurs
+- Ces deux comptes peuvent se connecter sans clé
+- Les autres comptes sont supprimés
+E: Liste blanche : tout autre compte est refusé, même s'il existe. Attention à ne pas t'exclure toi-même.
+
+Q: Que signifie le message `REMOTE HOST IDENTIFICATION HAS CHANGED` ?
++ La clé d'hôte du serveur ne correspond plus à celle de known_hosts
+- Ta clé privée a été modifiée ou corrompue sur ton poste
+- Le mot de passe de ton compte a expiré sur le serveur
+- Le serveur a changé de nom d'hôte dans son fichier hosts
+E: Serveur réinstallé ou attaque de l'homme du milieu. On vérifie avant de supprimer l'ancienne entrée (`ssh-keygen -R hôte`).
+
+Q: Que fait `ssh-copy-id user@serveur` ?
++ Copie ta clé publique dans `authorized_keys` du serveur
+- Copie ta clé privée sur le serveur
+- Génère une nouvelle paire de clés
+- Copie les fichiers de ton dossier personnel
+E: Il faut pouvoir se connecter une première fois (souvent par mot de passe). Sur les images cloud Ubuntu, le mot de passe est désactivé : on colle la clé à la main.
+
+Q: À quoi sert `ssh-agent` ?
++ Garder ta clé privée déverrouillée en mémoire pendant la session
+- Générer automatiquement une nouvelle paire de clés chaque jour
+- Bloquer les adresses IP qui échouent trop souvent à se connecter
+- Copier ta clé publique sur tous les serveurs déjà connus
+E: `ssh-add` ajoute une clé à l'agent. Une passphrase protège la clé privée si ton poste est volé.
+
+Q: Quel fichier côté client permet de créer des raccourcis (alias, utilisateur, port, clé) pour SSH ?
++ `~/.ssh/config`
+- `/etc/ssh/sshd_config`
+- `~/.ssh/known_hosts`
+- `~/.bashrc`
+E: Exemple : `Host node1 / HostName 172.17.51.240 / User alice`. Ensuite `ssh node1` suffit.
+
+Q: Que fait `ssh -L 8080:localhost:80 user@serveur` ?
++ Le port 8080 de ton poste mène au port 80 du serveur, à travers SSH
+- Le port 80 du serveur est publié sur Internet, sur le port 8080
+- Le port 8080 du serveur mène au port 80 de ton poste, à travers SSH
+- La bande passante de la session SSH est limitée à 8080 ko/s
+E: Le port forwarding local permet d'atteindre une interface d'admin non exposée (Proxmox, Zabbix) à travers SSH.
+
+Q: Quel port utilise SSH par défaut ?
++ 22/TCP
+- 21/TCP
+- 23/TCP
+- 443/TCP
+E: 21 = FTP, 23 = Telnet (en clair, à bannir), 443 = HTTPS. Changer le port réduit le bruit mais n'est pas une vraie protection.
+
+Q: Que fait fail2ban ?
++ Il lit les logs et bannit un temps les IP qui échouent trop souvent
+- Il chiffre les connexions SSH avec une seconde couche de clés
+- Il remplace le pare-feu et ferme tous les ports non utilisés
+- Il impose un mot de passe plus long après trois échecs
+E: Exemple du lab : `maxretry = 3` en `findtime = 10m` → `bantime = 10m`. `fail2ban-client status sshd` pour voir les IP bannies.
+
+Q: Comment débannir une IP dans fail2ban ?
++ `sudo fail2ban-client set sshd unbanip 172.17.48.249`
+- `sudo fail2ban-client unban sshd all 172.17.48.249`
+- `sudo ufw delete deny from 172.17.48.249 to any`
+- `sudo systemctl restart ssh --unban 172.17.48.249`
+E: On passe par la console (ou une autre IP) si on s'est soi-même banni. Vu dans le lab M1.
+
+Q: Pourquoi écrire la config fail2ban dans `jail.local` et pas dans `jail.conf` ?
++ `jail.conf` peut être écrasé par les mises à jour du paquet
+- `jail.conf` n'est pas lu par fail2ban au démarrage
+- `jail.local` est chargé plus vite au démarrage
+- `jail.local` est obligatoire pour activer la jail sshd
+E: Même logique que `sshd_config.d/` : on ne modifie pas le fichier livré par le paquet, on le complète.
+
+Q: Que fait unattended-upgrades sur Debian/Ubuntu ?
++ Il installe automatiquement les mises à jour de sécurité
+- Il change de version de distribution tout seul
+- Il supprime les paquets inutilisés chaque jour
+- Il met à jour le firmware des disques
+E: Activé par `/etc/apt/apt.conf.d/20auto-upgrades`, réglé dans `50unattended-upgrades`, historique dans `/var/log/unattended-upgrades/`.
+
+Q: Que propose l'outil Lynis ?
++ Un audit de sécurité avec avertissements, suggestions et indice de durcissement
+- Un antivirus qui analyse en temps réel les fichiers et la mémoire des serveurs
+- Un pare-feu applicatif qui filtre les requêtes HTTP envoyées aux sites web
+- Un gestionnaire de mots de passe qui fait tourner les secrets des serveurs
+E: `sudo lynis audit system`. Chaque point a un ID (ex. SSH-7408) ; `lynis show details ID` explique le test. On trie les suggestions, on ne les applique pas à l'aveugle.

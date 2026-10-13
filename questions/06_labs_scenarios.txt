@@ -1,0 +1,213 @@
+## lab
+
+Q: Dans le lab, comment as-tu accédé aux VM Multipass la toute première fois, sans clé SSH ?
++ Avec `multipass shell node1`, puis en ajoutant ta clé publique
+- Avec `ssh root@node1` et le mot de passe root par défaut
+- Avec le Bureau à distance de Windows, puis un terminal
+- Avec `ssh-copy-id ubuntu@node1` et le mot de passe ubuntu
+E: Multipass injecte sa propre clé. Ensuite, on colle sa clé publique pour pouvoir faire `ssh ubuntu@IP` depuis WSL ou PowerShell.
+
+Q: Le réseau « Default Switch » de Hyper-V a deux défauts pour un lab. Lesquels ?
++ Les IP changent aux redémarrages (DHCP) et le réseau est natté
+- Il n'a ni accès Internet ni DNS, tout est à configurer à la main
+- Il ne supporte pas Linux et limite le lab à deux VM au maximum
+- Il bloque SSH et HTTP entre les VM et le PC hôte
+E: D'où la règle du lab : ne pas figer les IP dans `/etc/hosts`, utiliser les noms `.mshome.net` résolus par 172.17.48.1.
+
+Q: La VM ceph1 refusait de démarrer. Pourquoi ?
++ La RAM demandée par les VM dépassait la mémoire libre du PC
+- L'image Ubuntu téléchargée pour ceph1 était corrompue
+- Hyper-V n'accepte pas plus de trois VM à la fois
+- Le disque du PC était plein à cause des autres VM
+E: Solution : démarrer seulement les VM utiles au module (ctrl + node1), ou réduire la RAM de ceph1.
+
+Q: Dans le lab M1, pourquoi le fichier s'appelle-t-il `10-hardening.conf` ?
++ Pour être lu avant `50-cloud-init.conf`, car la 1ʳᵉ valeur lue gagne
+- Pour être lu après `50-cloud-init.conf`, car la dernière valeur lue gagne
+- Parce que sshd n'accepte que les fichiers dont le nom commence par 10
+- Par simple convention de nommage, sans effet sur la configuration
+E: cloud-init y met `PasswordAuthentication yes`. Lu après, ton réglage n'aurait aucun effet. Vérification avec `sudo sshd -T | grep -i password`.
+
+Q: Quelle commande du lab montre qu'un fichier supprimé occupe encore de la place ?
++ `sudo lsof +L1`
+- `sudo du -sh /`
+- `sudo df -i`
+- `sudo find / -deleted`
+E: `+L1` = fichiers ouverts avec moins d'un lien, donc supprimés du dossier mais encore tenus par un processus. Redémarrer ce processus libère la place.
+
+Q: Pourquoi `apt install nginx` échouait-il dans les VM au début du lab ?
++ Le VPN Mullvad du PC cassait la résolution DNS des VM
+- Le paquet nginx n'existe pas dans les dépôts d'Ubuntu
+- Les VM n'avaient pas assez d'espace disque pour apt
+- Le pare-feu ufw des VM bloquait les dépôts d'Ubuntu
+E: Diagnostic : `ping 1.1.1.1` OK mais résolution de noms KO → problème DNS. Couper le VPN pendant le lab a réglé le souci.
+
+Q: Pourquoi le test « casser le DNS » demandait-il `resolvectl flush-caches` ?
++ Le cache de systemd-resolved aurait gardé l'ancienne réponse
+- Pour redémarrer la carte réseau et forcer un nouveau bail DHCP
+- Pour supprimer les entrées statiques de `/etc/hosts`
+- Pour relancer nginx et recharger sa configuration DNS
+E: Le cache garde les réponses pendant leur TTL. En dépannage, toujours penser au cache (DNS, navigateur, ARP).
+
+Q: Dans le lab nftables, pourquoi `kill $SAFETY` et pas `kill %1` ?
++ `%1` vise le 1ᵉʳ job du shell (peut-être le serveur python) ; `$SAFETY` garde le bon PID
+- `%1` n'existe pas en bash : seule la syntaxe avec une variable fonctionne
+- `$SAFETY` tue d'un coup tous les processus lancés en arrière-plan
+- `kill %1` redémarre la machine au lieu d'arrêter le processus visé
+E: `$!` donne le PID de la dernière commande lancée en arrière-plan. On le stocke juste après : `SAFETY=$!`.
+
+Q: Pourquoi capturer avec `tcpdump -U -w fichier.pcap` ?
++ `-U` écrit chaque paquet dans le fichier dès sa capture
+- `-U` limite la capture au seul trafic UDP
+- `-U` lance la capture sous un compte non root
+- `-U` déchiffre le HTTPS au moment de la capture
+E: Sans `-U`, une capture courte interrompue peut laisser un fichier vide. Vérifier avec `ls -l` puis lire avec `tcpdump -r`.
+
+Q: Quel outil du lab M1 donne un « hardening index » ?
++ Lynis
+- fail2ban
+- unattended-upgrades
+- ufw
+E: `sudo lynis audit system`. On relance après les corrections pour voir l'indice monter, et on justifie les suggestions qu'on ne suit pas.
+
+Q: Dans le lab M1, comment as-tu vérifié que fail2ban fonctionnait ?
++ En provoquant des échecs SSH depuis une autre VM, puis `fail2ban-client status sshd`
+- En redémarrant le serveur, puis en relisant `/etc/fail2ban/jail.conf` ligne par ligne
+- En désactivant ufw, puis en vérifiant que le port 22 restait quand même fermé
+- En lançant `fail2ban-client test`, qui simule une attaque sans aucune connexion
+E: L'IP de l'attaquant apparaît dans « Banned IP list ». On la débannit ensuite avec `set sshd unbanip`.
+
+Q: Quelle commande crée une VM Multipass de 2 Go de RAM nommée node1 ?
++ `multipass launch --name node1 --memory 2G --disk 10G`
+- `multipass create node1 --ram 2G --size 10G`
+- `multipass new --vm node1 --memory 2 --disk 10`
+- `hyperv launch --name node1 --memory 2G --disk 10G`
+E: `multipass list` montre les VM et leurs IP, `multipass stop` / `start` les arrête et relance, `multipass info` donne le détail.
+
+## scen
+
+Q: Un site nginx renvoie une erreur après une modification de configuration. Quel est le bon ordre ?
++ `sudo nginx -t`, corriger l'erreur, puis `sudo systemctl reload nginx`
+- `sudo systemctl restart nginx` en boucle jusqu'à ce que le site revienne
+- `sudo apt reinstall nginx`, puis remettre la configuration par défaut
+- `sudo reboot`, puis vérifier si le site répond après le redémarrage
+E: `nginx -t` donne le fichier et la ligne de l'erreur. Ensuite `journalctl -u nginx` et `/var/log/nginx/error.log` si le problème persiste.
+
+Q: Un serveur affiche « No space left on device ». Démarche correcte ?
++ `df -h`, puis `du` sur le dossier, `lsof +L1`, et `df -i` pour les inodes
+- `rm -rf /var/log/*`, puis redémarrer les services qui écrivent des logs
+- `reboot`, puis relancer `df -h` jusqu'à ce que la place revienne
+- Agrandir le disque tout de suite, sans chercher ce qui le remplit
+E: Libérer de la place proprement : `journalctl --vacuum-size`, rotation des logs, nettoyage apt (`apt clean`), puis corriger la cause (log qui grossit, sauvegarde mal placée).
+
+Q: Un collègue ne peut plus se connecter en SSH après une modification de `sshd_config`. Que faire ?
++ Passer par la console (ou une session ouverte), `sshd -t`, corriger, recharger
+- Réinstaller le serveur à partir de la dernière image propre de la VM
+- Attendre que sshd revienne tout seul à sa configuration précédente
+- Changer le mot de passe root depuis un autre serveur du réseau
+E: D'où la règle : toujours garder une session ouverte et tester avec `sshd -t` avant de recharger.
+
+Q: Un service ne démarre plus après un redémarrage. Première commande ?
++ `systemctl status service`, puis `journalctl -u service -b`
+- `reboot` une seconde fois, puis `systemctl start service`
+- `apt remove service`, puis `apt install service`
+- `rm -rf /etc/service`, puis `systemctl daemon-reload`
+E: Le statut montre l'état et le code de sortie ; le journal donne l'erreur exacte (port déjà utilisé, fichier de config, droits…).
+
+Q: Un utilisateur dit « le partage réseau ne marche plus ». Quelle première question ?
++ Qu'est-ce qui ne marche pas, depuis quand, et ses collègues sont-ils touchés ?
+- Quel est son mot de passe, pour que vous testiez avec son compte ?
+- A-t-il déjà essayé de réinstaller Windows sur son ordinateur ?
+- Peut-il rappeler demain, quand l'équipe réseau sera disponible ?
+E: Une seule personne → son poste ou ses droits. Tout le service → le serveur ou le réseau. Le périmètre oriente le diagnostic.
+
+Q: Le SIEM signale 500 échecs de connexion sur un compte en 5 minutes, puis une connexion réussie. Que faire ?
++ Le traiter comme un compte compromis : bloquer, révoquer, vérifier, escalader
+- L'ignorer : l'utilisateur a simplement fini par retrouver son mot de passe
+- Supprimer l'alerte pour éviter de polluer le tableau de bord du SIEM
+- Redémarrer le SIEM : 500 échecs en 5 minutes indiquent un bug de collecte
+E: Force brute suivie d'un succès = signal fort. Vérifier l'IP source, le pays, l'heure, et les actions après la connexion.
+
+Q: Une mise à jour casse une application en production. Meilleure réaction immédiate ?
++ Revenir à la version précédente pour rétablir le service, puis analyser
+- Corriger directement en production, sans prévenir, pour gagner du temps
+- Attendre la prochaine version de l'éditeur, qui corrigera sûrement le bug
+- Désactiver la supervision pour éviter que les alertes ne s'accumulent
+E: Priorité au service. D'où l'intérêt du snapshot avant mise à jour, d'un plan de retour arrière écrit et d'un test en préproduction.
+
+Q: Tu découvres une clé d'API en clair dans un dépôt Git partagé. Que faire en premier ?
++ Révoquer (ou faire tourner) la clé tout de suite, puis nettoyer et prévenir
+- Supprimer le fichier dans un nouveau commit : la clé n'est alors plus visible
+- Rendre le dépôt privé : la clé n'est alors plus accessible à personne
+- Renommer le fichier qui contient la clé pour qu'il ne soit plus trouvé
+E: La clé reste dans l'historique et a pu être copiée. Seule la révocation la rend inutilisable.
+
+Q: Un disque d'un serveur RAID 1 tombe en panne. Que faire ?
++ Remplacer vite le disque, suivre la reconstruction, vérifier la sauvegarde
+- Rien : un RAID 1 continue de fonctionner indéfiniment avec un seul disque
+- Retirer aussi le disque restant pour le tester sur un autre serveur
+- Réinstaller le serveur sur deux disques neufs sans attendre la reconstruction
+E: Pendant la reconstruction, le seul disque restant est très sollicité : c'est un moment à risque. D'où l'importance d'une sauvegarde récente.
+
+Q: Le cluster Ceph passe en HEALTH_WARN après la panne d'un serveur. Réaction ?
++ `ceph -s` et `ceph health detail`, vérifier la place libre, puis traiter le serveur
+- Supprimer tout de suite les OSD du serveur en panne pour nettoyer le cluster
+- Redémarrer tous les nœuds du cluster pour forcer une nouvelle répartition
+- Désactiver la réplication pour que le cluster cesse de recopier les données
+E: Avec 3 copies sur 3 hôtes, la perte d'un hôte est prévue. Ne rien précipiter : comprendre l'état avant d'agir.
+
+Q: Tu dois exposer une interface d'admin web interne à un prestataire. Meilleure option ?
++ Un VPN ou un bastion avec MFA, réservé à ce prestataire et journalisé
+- Ouvrir le port sur Internet en protégeant l'interface par un mot de passe fort
+- Prêter au prestataire le compte d'un employé qui a déjà les bons accès
+- Désactiver le pare-feu pendant toute la durée de son intervention
+E: Les interfaces d'administration exposées sont une cible favorite. Accès nominatif, temporaire, journalisé.
+
+Q: Un pod Kubernetes est en CrashLoopBackOff. Dans quel ordre investiguer ?
++ `kubectl describe pod`, puis `kubectl logs --previous`, puis la configuration
+- Supprimer le namespace entier, puis redéployer toute l'application
+- Redémarrer tous les nœuds du cluster pour relancer le Pod
+- Passer à dix réplicas pour qu'au moins un Pod finisse par démarrer
+E: Causes fréquentes : variable d'environnement manquante, base de données injoignable, limite mémoire trop basse (OOMKilled).
+
+Q: On te demande de faire une tâche que tu n'as jamais faite en production. Bonne attitude ?
++ Le dire, tester en lab, écrire un plan de retour arrière, demander une relecture
+- Le faire tout de suite en production pour montrer qu'on est autonome
+- Refuser la tâche et demander qu'elle soit confiée à quelqu'un d'autre
+- Le faire la nuit, sans prévenir, pour que personne ne soit dérangé
+E: En entretien comme au travail, savoir dire « je ne connais pas encore, voici comment je m'y prendrais » est très apprécié.
+
+Q: Un utilisateur se plaint d'un site lent seulement depuis le bureau, pas depuis chez lui. Piste la plus logique ?
++ Le chemin réseau de l'entreprise (proxy, pare-feu, lien, DNS)
+- Le navigateur de l'utilisateur, mal configuré au bureau
+- Le serveur du site, qui ralentit pour certaines adresses
+- Le poste de l'utilisateur, qui manque de mémoire vive
+E: Comparer les deux situations isole la variable. `mtr`, la supervision du lien et les logs du proxy aident à confirmer.
+
+Q: Tu dois automatiser la création de 50 comptes utilisateurs à partir d'un fichier. Quelle approche ?
++ Un script testé sur 2 comptes d'abord, qui gère les erreurs et journalise
+- Créer les 50 comptes à la main pour être sûr de ne rien oublier
+- Lancer directement le script sur les 50 comptes pour gagner du temps
+- Envoyer un formulaire aux utilisateurs pour qu'ils créent leur compte
+E: Tester sur un petit échantillon, gérer les erreurs (compte existant) et garder un log. C'est ce qu'on attend d'un admin qui automatise.
+
+Q: Une alerte EDR signale un PowerShell lancé avec un long texte encodé en base64 depuis Word. Que penser ?
++ Très suspect : macro malveillante probable, isoler le poste et analyser
+- Normal : Word lance PowerShell pour vérifier les mises à jour d'Office
+- Normal : il s'agit d'une mise à jour de Windows déclenchée par Word
+- Faux positif : les EDR signalent toujours PowerShell, il faut l'ignorer
+E: Word qui lance PowerShell encodé (`-enc`) est un schéma classique de premier accès. MITRE ATT&CK : T1059.001.
+
+Q: Avant de redémarrer un serveur de production pour une mise à jour, que vérifier ?
++ Le créneau validé, la sauvegarde ou le snapshot, les gens prévenus, le retour arrière
+- Seulement que plus personne n'est connecté en SSH au moment du redémarrage
+- Rien : un redémarrage est sans risque sur un serveur Linux à jour
+- Que l'écran de la console est allumé pour voir les messages du démarrage
+E: C'est le cœur de la gestion des changements. Après le redémarrage : vérifier les services et la supervision.
+
+Q: Tu reçois un mail « urgent » d'un fournisseur qui annonce un changement de coordonnées bancaires. Que faire ?
++ Vérifier par téléphone, auprès d'un contact connu du fournisseur
+- Mettre à jour le RIB tout de suite pour ne pas retarder le paiement
+- Répondre au mail pour demander une confirmation écrite
+- Transférer le mail à tout le service comptable pour avis
+E: Fraude au faux fournisseur : répondre au mail confirme seulement au fraudeur. Un canal déjà connu est la seule vérification fiable.

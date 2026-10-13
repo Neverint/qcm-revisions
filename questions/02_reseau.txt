@@ -1,0 +1,749 @@
+## net
+
+Q: Combien de couches compte le modèle OSI ?
++ 7
+- 4
+- 5
+- 9
+E: Physique, Liaison, Réseau, Transport, Session, Présentation, Application. Le modèle TCP/IP en compte 4 (Accès réseau, Internet, Transport, Application).
+
+Q: À quelle couche OSI travaille un routeur ?
++ Couche 3 (Réseau)
+- Couche 2 (Liaison)
+- Couche 4 (Transport)
+- Couche 1 (Physique)
+E: Le routeur décide en fonction de l'adresse IP. Le switch classique travaille en couche 2 avec les adresses MAC.
+
+Q: À quelle couche OSI travaille un switch classique ?
++ Couche 2 (Liaison)
+- Couche 3 (Réseau)
+- Couche 1 (Physique)
+- Couche 4 (Transport)
+E: Il apprend les adresses MAC et les associe à ses ports (table CAM). Un switch « L3 » sait aussi router.
+
+Q: Quelle est l'unité de données (PDU) de la couche Transport en TCP ?
++ Le segment
+- La trame
+- Le paquet
+- Le bit
+E: Couche 4 = segment (TCP) ou datagramme (UDP), couche 3 = paquet, couche 2 = trame, couche 1 = bits.
+
+Q: Quelle est la longueur d'une adresse MAC ?
++ 48 bits (6 octets)
+- 32 bits (4 octets)
+- 64 bits (8 octets)
+- 128 bits (16 octets)
+E: Exemple : `52:54:00:ab:cd:ef`. Les 3 premiers octets (OUI) identifient le fabricant. Une IPv4 fait 32 bits, une IPv6 128 bits.
+
+Q: À quoi sert le protocole ARP ?
++ Trouver l'adresse MAC qui correspond à une IP du réseau local
+- Attribuer automatiquement une adresse IP à une machine du réseau
+- Traduire un nom de machine en adresse IP sur le réseau local
+- Chiffrer les trames Ethernet échangées entre deux machines
+E: « Qui a 192.168.1.1 ? » est envoyé en broadcast. `ip neigh` affiche le cache ARP. L'attribution d'IP, c'est DHCP ; les noms, c'est DNS.
+
+Q: Quels sont les 4 messages d'un échange DHCP, dans l'ordre ?
++ Discover, Offer, Request, Acknowledge
+- Request, Offer, Discover, Acknowledge
+- Discover, Request, Offer, Acknowledge
+- Offer, Discover, Acknowledge, Request
+E: Le client cherche (Discover), le serveur propose (Offer), le client accepte (Request), le serveur confirme (Ack). Ports UDP 67 (serveur) et 68 (client).
+
+Q: Quelle est la différence principale entre TCP et UDP ?
++ TCP établit une connexion et garantit l'ordre et la livraison ; UDP non
+- UDP établit une connexion et garantit l'ordre et la livraison ; TCP non
+- TCP est chiffré par défaut, alors qu'UDP envoie tout en clair
+- TCP sert uniquement au web et UDP uniquement aux e-mails
+E: TCP : web, SSH, mail. UDP : DNS (requêtes simples), DHCP, VoIP, streaming, où la vitesse compte plus que la retransmission.
+
+Q: Quel est l'ordre de la poignée de main TCP (three-way handshake) ?
++ SYN, SYN-ACK, ACK
+- ACK, SYN, SYN-ACK
+- SYN, ACK, FIN
+- HELLO, ACK, SYN
+E: Vu dans tcpdump : `[S]`, puis `[S.]`, puis `[.]`. La fermeture se fait avec FIN (`[F.]`) ou brutalement avec RST (`[R]`).
+
+Q: Dans tcpdump, que signifie le drapeau `[R]` en réponse à un SYN ?
++ Le port est fermé : la machine répond par un reset (RST)
+- La connexion est acceptée
+- Le paquet a été retransmis
+- Le pare-feu a jeté le paquet sans rien répondre
+E: Port fermé = RST immédiat (« Connection refused »). Pare-feu en DROP = aucune réponse, le client attend (timeout).
+
+Q: Quel port utilise HTTPS par défaut ?
++ 443/TCP
+- 80/TCP
+- 8443/UDP
+- 22/TCP
+E: HTTP = 80, HTTPS = 443. 8080 et 8443 sont des ports alternatifs souvent utilisés par des applications.
+
+Q: Quel port utilise DNS ?
++ 53, en UDP et en TCP
+- 53 en TCP uniquement
+- 67 en UDP
+- 25 en TCP
+E: Les requêtes courtes passent en UDP ; les grosses réponses et les transferts de zone utilisent TCP. DNS over TLS = 853, DNS over HTTPS = 443.
+
+Q: Associe le bon port : SMTP (envoi de mails entre serveurs) ?
++ 25/TCP
+- 110/TCP
+- 143/TCP
+- 389/TCP
+E: SMTP 25 (587 pour la soumission authentifiée), POP3 110, IMAP 143 (993 en TLS), LDAP 389 (636 en LDAPS).
+
+Q: Quel service utilise le port 3389 ?
++ RDP
+- MySQL
+- LDAP
+- SMB
+E: RDP exposé sur Internet est une porte d'entrée classique pour les rançongiciels. MySQL = 3306, SMB = 445, LDAP = 389.
+
+Q: Quel port utilise SMB (partage de fichiers Windows) ?
++ 445/TCP
+- 139/UDP
+- 21/TCP
+- 2049/TCP
+E: SMB moderne = 445. NetBIOS utilisait 137-139. NFS (partage Linux) utilise 2049.
+
+Q: Quel protocole utilise le port 123/UDP ?
++ NTP
+- SNMP
+- Syslog
+- TFTP
+E: Une heure fausse casse Kerberos, TLS et la corrélation des logs. SNMP = 161/162, Syslog = 514, TFTP = 69.
+
+Q: Quel port est utilisé par SNMP pour interroger un équipement ?
++ 161/UDP
+- 162/TCP
+- 514/UDP
+- 389/UDP
+E: 161 pour les requêtes, 162 pour les traps (alertes envoyées par l'équipement). Préférer SNMPv3, avec authentification et chiffrement.
+
+Q: Que fait un enregistrement DNS de type A ?
++ Associe un nom à une adresse IPv4
+- Associe un nom à une adresse IPv6
+- Indique le serveur de mail du domaine
+- Crée un alias vers un autre nom
+E: A = IPv4, AAAA = IPv6, MX = serveur de mail, CNAME = alias, PTR = résolution inverse, TXT = texte (SPF, vérifications).
+
+Q: Quel type d'enregistrement DNS sert à la résolution inverse (IP → nom) ?
++ PTR
+- CNAME
+- SOA
+- NS
+E: `dig -x 8.8.8.8` interroge l'enregistrement PTR. Les serveurs de mail le vérifient souvent.
+
+Q: Quel enregistrement DNS indique le serveur de messagerie d'un domaine ?
++ MX
+- MS
+- TXT
+- SRV
+E: Les MX ont une priorité : la plus petite valeur est essayée d'abord. `dig MX exemple.fr +short`.
+
+Q: Que fait la commande `dig exemple.fr +short` ?
++ Interroge le DNS et affiche seulement la réponse
+- Teste si le port 80 du domaine est ouvert
+- Affiche la route réseau jusqu'au domaine
+- Vide le cache DNS pour ce seul domaine
+E: `dig @1.1.1.1 exemple.fr` interroge un serveur précis. Attention : dig ne lit pas `/etc/hosts`, contrairement à `getent hosts`.
+
+Q: Pourquoi `dig node1` échoue alors que `ping node1` marche ?
++ Le nom est dans `/etc/hosts` : ping le lit, dig interroge seulement le DNS
+- dig n'accepte que les noms complets et refuse les noms courts comme node1
+- ping utilise un autre port DNS que dig, ouvert sur le pare-feu de la VM
+- Le pare-feu de la VM bloque les requêtes envoyées par dig uniquement
+E: Le système suit l'ordre de `/etc/nsswitch.conf` (`files dns`). `getent hosts node1` montre ce que voient les applications. Vu dans le lab M2.
+
+Q: Quel fichier indique l'ordre de recherche des noms (fichier hosts puis DNS) ?
++ `/etc/nsswitch.conf`
+- `/etc/resolv.conf`
+- `/etc/hosts.allow`
+- `/etc/hostname`
+E: Ligne `hosts: files dns`. `/etc/resolv.conf` indique à quel serveur DNS envoyer les requêtes.
+
+Q: Sur Ubuntu, pourquoi `/etc/resolv.conf` indique-t-il `nameserver 127.0.0.53` ?
++ C'est le résolveur local de systemd-resolved, qui relaie les requêtes
+- C'est une erreur de configuration laissée par l'installateur Ubuntu
+- C'est l'adresse de la box Internet, vue depuis l'intérieur de la machine
+- C'est un serveur DNS public, fourni par Canonical pour Ubuntu
+E: `resolvectl status` montre les vrais serveurs utilisés par interface. `resolvectl flush-caches` vide son cache.
+
+Q: Quelle commande affiche les adresses IP des interfaces sous Linux moderne ?
++ `ip a` (ip addr)
+- `ipconfig /all`
+- `netstat -i`
+- `route -n`
+E: `ifconfig` est obsolète (paquet net-tools). `ipconfig` est la commande Windows.
+
+Q: Quelle commande affiche la table de routage et la passerelle par défaut ?
++ `ip route`
+- `ip neigh`
+- `ss -r`
+- `arp -a`
+E: Ligne `default via 172.17.48.1 dev eth0`. `ip route get 8.8.8.8` montre la route choisie pour une destination.
+
+Q: Quelle commande liste les ports en écoute avec le processus associé ?
++ `sudo ss -tulpn`
+- `sudo ip -tulpn`
+- `sudo ps -tulpn`
+- `sudo route -tulpn`
+E: t = TCP, u = UDP, l = en écoute, p = processus, n = numérique. Remplace `netstat -tulpn`.
+
+Q: Que signifie un service en écoute sur `127.0.0.1:5432` ?
++ Il n'est joignable que depuis la machine elle-même
+- Il est joignable depuis tout le réseau local
+- Il est arrêté et attend qu'on le démarre
+- Il écoute sur toutes les interfaces réseau
+E: `0.0.0.0` (ou `[::]` / `*`) = toutes les interfaces. `127.0.0.1` = boucle locale uniquement. Bon réflexe pour une base de données.
+
+Q: Que fait `traceroute` (ou `mtr`) ?
++ Montre les routeurs traversés jusqu'à une destination
+- Mesure le débit maximal de la connexion Internet
+- Liste les ports ouverts sur un serveur distant
+- Affiche la table ARP des machines voisines
+E: Il joue sur le TTL des paquets. `mtr` combine traceroute et ping en continu, pratique pour voir où ça perd.
+
+Q: À quoi sert le champ TTL d'un paquet IP ?
++ Il baisse à chaque routeur ; à 0, le paquet est jeté, ce qui évite les boucles
+- Il fixe la durée de validité du certificat présenté par le serveur
+- Il limite la vitesse maximale du paquet sur chaque lien du réseau
+- Il mesure le temps de réponse du serveur, en millisecondes
+E: Le routeur qui jette le paquet renvoie un ICMP « Time exceeded » : c'est ce que traceroute exploite.
+
+Q: Quel protocole utilise la commande `ping` ?
++ ICMP
+- TCP sur le port 7
+- UDP sur le port 53
+- ARP
+E: Un ping qui échoue ne prouve pas que la machine est éteinte : beaucoup de pare-feu bloquent ICMP.
+
+Q: Qu'est-ce qu'un VLAN ?
++ Un découpage logique d'un switch en plusieurs réseaux de couche 2
+- Un réseau privé virtuel chiffré qui relie deux sites par Internet
+- Un réseau Wi-Fi séparé pour les invités, sans accès au réseau interne
+- Un câble réseau virtuel qui relie deux VM sur le même hôte
+E: Exemple : VLAN 10 = utilisateurs, VLAN 20 = serveurs, VLAN 30 = admin. Pour passer d'un VLAN à l'autre, il faut un routeur ou un pare-feu.
+
+Q: Quelle norme ajoute une étiquette VLAN aux trames Ethernet ?
++ 802.1Q
+- 802.11ac
+- 802.3af
+- 802.1X
+E: Un port « trunk » transporte plusieurs VLAN étiquetés ; un port « access » appartient à un seul VLAN. 802.1X = authentification des ports, 802.3af = PoE, 802.11 = Wi-Fi.
+
+Q: À quoi sert 802.1X ?
++ Authentifier un appareil avant de lui ouvrir le réseau
+- Étiqueter les trames avec un numéro de VLAN
+- Alimenter un équipement par le câble réseau
+- Agréger plusieurs liens en un seul lien logique
+E: Souvent couplé à un serveur RADIUS (ex. NPS chez Microsoft). Le switch reste fermé tant que l'appareil n'est pas authentifié.
+
+Q: À quoi sert le protocole Spanning Tree (STP) ?
++ Éviter les boucles de couche 2 en bloquant les liens en trop
+- Répartir la charge entre deux routeurs en cas de panne
+- Chiffrer le trafic qui circule entre deux switches
+- Attribuer automatiquement les VLAN aux ports des switches
+E: Sans STP, une boucle crée une tempête de broadcast qui paralyse le réseau en quelques secondes.
+
+Q: Qu'est-ce que le NAT ?
++ La traduction des adresses privées en adresse publique par le routeur
+- La traduction des noms de domaine en adresses IP par le routeur
+- Le découpage d'un switch en plusieurs réseaux isolés
+- Le chiffrement des paquets entre le routeur et Internet
+E: Le PAT (NAT avec ports) permet à tout un réseau de sortir avec une seule IP publique. Le DNAT (redirection de port) expose un service interne.
+
+Q: Quelles plages sont des adresses IPv4 privées (RFC 1918) ?
++ 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+- 10.0.0.0/16, 172.0.0.0/8, 192.168.0.0/24
+- 100.64.0.0/10, 169.254.0.0/16, 127.0.0.0/8
+- 1.0.0.0/8, 172.16.0.0/16, 192.0.0.0/8
+E: Ces plages ne sont pas routées sur Internet. Le Default Switch Hyper-V du lab utilise 172.17.48.0/20, dans 172.16.0.0/12.
+
+Q: Que signifie une adresse en 169.254.x.x sur un poste ?
++ Le poste n'a pas obtenu d'adresse du serveur DHCP
+- Le poste est connecté au Wi-Fi des invités
+- Le poste a reçu une adresse IP publique
+- Le poste n'utilise plus que l'IPv6
+E: Premier réflexe : vérifier le câble, le VLAN du port et le serveur DHCP. 169.254.0.0/16 = adresses « link-local ».
+
+Q: Que représente l'adresse 127.0.0.1 ?
++ La boucle locale : la machine elle-même
+- La passerelle par défaut du réseau
+- Le serveur DNS principal de la machine
+- L'adresse de broadcast du réseau
+E: En IPv6, c'est `::1`. Le trafic vers localhost passe par l'interface `lo`, pas `eth0` : c'est pour ça que tcpdump sur eth0 ne voyait rien dans le lab.
+
+Q: Combien de bits compte une adresse IPv6 ?
++ 128
+- 64
+- 48
+- 32
+E: Écrite en 8 groupes hexadécimaux : `2001:db8::1`. `::` remplace une suite de groupes à zéro (une seule fois par adresse).
+
+Q: Quel préfixe IPv6 correspond aux adresses link-local ?
++ fe80::/10
+- 2001::/16
+- fc00::/7
+- ff00::/8
+E: Chaque interface IPv6 en a une. fc00::/7 = adresses locales uniques (équivalent du privé), ff00::/8 = multicast, 2000::/3 = global.
+
+Q: Qu'est-ce qu'une passerelle par défaut ?
++ Le routeur qui reçoit le trafic destiné aux autres réseaux
+- Le serveur qui traduit les noms en adresses IP
+- Le serveur qui attribue les adresses IP du réseau
+- Le switch auquel la machine est directement branchée
+E: Si la destination n'est pas dans ton sous-réseau, le paquet part vers la passerelle. Sans elle, pas d'accès à Internet.
+
+Q: Quelle est la différence entre un hub et un switch ?
++ Le hub répète chaque trame sur tous ses ports ; le switch vise le bon port
+- Le switch répète chaque trame sur tous ses ports ; le hub vise le bon port
+- Le hub route entre réseaux IP ; le switch reste dans un seul réseau
+- Aucune : « hub » est simplement l'ancien nom commercial du switch
+E: Le hub est obsolète : collisions et trafic visible par tous. Le switch apprend les MAC pour faire suivre intelligemment.
+
+Q: Qu'est-ce qu'un VPN site à site ?
++ Un tunnel chiffré permanent entre deux réseaux d'entreprise
+- Un VPN installé sur le téléphone de chaque employé nomade
+- Un VLAN étendu entre deux sites, sans aucun chiffrement
+- Un proxy web qui filtre la navigation des deux sites
+E: Souvent en IPsec entre deux pare-feux. Le VPN « nomade » (client à site) connecte un poste seul : OpenVPN, WireGuard, IPsec IKEv2.
+
+Q: Quel protocole VPN moderne est intégré au noyau Linux et utilise UDP ?
++ WireGuard
+- PPTP
+- L2TP sans IPsec
+- Telnet
+E: WireGuard est léger, rapide et utilise une cryptographie moderne. PPTP est cassé et à bannir.
+
+Q: Que permet l'agrégation de liens (LACP, 802.3ad, « bond ») ?
++ Combiner plusieurs câbles en un lien logique, pour le débit et la redondance
+- Diviser un port physique en plusieurs VLAN étiquetés séparément
+- Relier deux réseaux Wi-Fi pour étendre la couverture d'un bâtiment
+- Chiffrer le lien entre deux switches d'un même réseau local
+E: Sous Linux, une interface `bond0`. Courant sur les serveurs Proxmox et Ceph qui ont besoin de débit et de tolérance aux pannes.
+
+Q: Dans quel ordre un client résout-il un nom de domaine inconnu (sans cache) ?
++ Résolveur → racine → serveur du TLD (.fr) → serveur faisant autorité
+- Serveur faisant autorité → racine → serveur du TLD (.fr) → résolveur
+- Résolveur → serveur du TLD (.fr) → racine → serveur faisant autorité
+- Navigateur → box Internet → serveur du TLD (.fr) → racine
+E: Le résolveur (celui du FAI, de l'entreprise ou 1.1.1.1) fait la recherche récursive et garde la réponse en cache pendant le TTL.
+
+Q: Que signifie le TTL d'un enregistrement DNS ?
++ La durée pendant laquelle la réponse peut rester en cache
+- Le nombre de serveurs DNS traversés par la requête
+- La durée de validité de l'achat du nom de domaine
+- Le délai maximal accordé au serveur pour répondre
+E: Avant une migration, on baisse le TTL quelques jours avant, pour que le changement d'IP se propage vite.
+
+Q: Qu'est-ce qu'un reverse proxy ?
++ Un serveur placé devant les applications, qui leur relaie les requêtes des clients
+- Un serveur que les employés utilisent pour sortir sur Internet et filtrer la navigation
+- Un serveur DNS qui traduit les adresses IP en noms, à l'inverse du DNS classique
+- Un VPN client qui fait passer tout le trafic d'un poste par le réseau de l'entreprise
+E: nginx, HAProxy, Traefik : terminaison TLS, répartition de charge, cache. Le proxy « direct » (Squid), lui, sert aux clients pour sortir.
+
+Q: Qu'est-ce qu'un répartiteur de charge (load balancer) ?
++ Un système qui répartit les requêtes entre plusieurs serveurs identiques
+- Un onduleur qui répartit l'électricité entre plusieurs serveurs d'une baie
+- Un outil qui limite la bande passante accordée à chaque utilisateur
+- Un pare-feu qui bloque les clients qui envoient trop de requêtes
+E: Algorithmes courants : round-robin, moins de connexions. Avec des « health checks », un serveur en panne est retiré automatiquement.
+
+## subnet
+
+Q: Combien d'adresses d'hôtes utilisables dans un /24 ?
++ 254
+- 256
+- 255
+- 128
+E: 32 − 24 = 8 bits d'hôte → 2⁸ = 256 adresses, moins le réseau et le broadcast = 254.
+
+Q: Quel masque correspond à /26 ?
++ 255.255.255.192
+- 255.255.255.128
+- 255.255.255.224
+- 255.255.255.0
+E: /26 = 24 + 2 bits dans le dernier octet : 128 + 64 = 192. Taille du bloc : 256 − 192 = 64.
+
+Q: Combien d'hôtes utilisables dans un /26 ?
++ 62
+- 64
+- 30
+- 126
+E: 6 bits d'hôte → 2⁶ = 64 adresses − 2 = 62.
+
+Q: Quel masque correspond à /27 ?
++ 255.255.255.224
+- 255.255.255.240
+- 255.255.255.192
+- 255.255.255.248
+E: 128 + 64 + 32 = 224. Bloc de 32 adresses, 30 hôtes utilisables.
+
+Q: Combien d'hôtes utilisables dans un /28 ?
++ 14
+- 16
+- 30
+- 6
+E: 4 bits d'hôte → 16 adresses − 2 = 14. Masque 255.255.255.240.
+
+Q: Combien d'hôtes utilisables dans un /30 ?
++ 2
+- 4
+- 0
+- 6
+E: 4 adresses − 2 = 2. Parfait pour un lien point à point entre deux routeurs. (Le /31 est aussi permis pour ces liens, sans broadcast.)
+
+Q: Quelle est l'adresse réseau de 192.168.10.77/26 ?
++ 192.168.10.64
+- 192.168.10.0
+- 192.168.10.77
+- 192.168.10.128
+E: Blocs de 64 : 0, 64, 128, 192. 77 tombe dans le bloc 64–127. Réseau 64, broadcast 127.
+
+Q: Quelle est l'adresse de broadcast de 192.168.10.77/26 ?
++ 192.168.10.127
+- 192.168.10.255
+- 192.168.10.63
+- 192.168.10.128
+E: Bloc 64–127 : le broadcast est la dernière adresse, 127. Hôtes utilisables : .65 à .126.
+
+Q: Quelle est l'adresse réseau de 172.16.5.130/27 ?
++ 172.16.5.128
+- 172.16.5.96
+- 172.16.5.130
+- 172.16.5.160
+E: Blocs de 32 : …96, 128, 160… 130 est entre 128 et 159. Réseau .128, broadcast .159, hôtes .129 à .158.
+
+Q: Quelle est la dernière adresse utilisable de 172.16.5.130/27 ?
++ 172.16.5.158
+- 172.16.5.159
+- 172.16.5.160
+- 172.16.5.254
+E: Bloc 128–159 : .159 est le broadcast, donc la dernière adresse d'hôte est .158.
+
+Q: Quel masque correspond à /20 ?
++ 255.255.240.0
+- 255.255.255.240
+- 255.255.224.0
+- 255.255.248.0
+E: /20 = 16 + 4 bits dans le 3ᵉ octet : 128 + 64 + 32 + 16 = 240. Bloc de 16 dans le 3ᵉ octet.
+
+Q: Combien d'adresses d'hôtes dans un /20 ?
++ 4094
+- 4096
+- 2046
+- 1022
+E: 12 bits d'hôte → 2¹² = 4096 − 2 = 4094.
+
+Q: Le réseau Hyper-V du lab est 172.17.48.0/20. Quelle est son adresse de broadcast ?
++ 172.17.63.255
+- 172.17.48.255
+- 172.17.255.255
+- 172.17.64.0
+E: Bloc de 16 dans le 3ᵉ octet : 48 à 63. Broadcast = 172.17.63.255. Toutes les IP 172.17.48.x à 172.17.63.x sont dans ce réseau.
+
+Q: 172.17.51.240 et 172.17.60.12 sont-elles dans le même réseau /20 ?
++ Oui : les deux sont entre 172.17.48.0 et 172.17.63.255
+- Non : leur 3ᵉ octet est différent (51 et 60)
+- Non : il faudrait qu'elles soient dans le même /24
+- Impossible à dire sans connaître la passerelle
+E: Avec un /20, le 3ᵉ octet varie de 48 à 63 dans le même réseau. On ne compare pas les octets un à un, on regarde le bloc.
+
+Q: Quelle est la notation CIDR du masque 255.255.255.128 ?
++ /25
+- /24
+- /26
+- /23
+E: 24 bits pour les trois 255, plus 1 bit (128) = /25. Bloc de 128, 126 hôtes.
+
+Q: Quelle est la notation CIDR du masque 255.255.252.0 ?
++ /22
+- /20
+- /23
+- /21
+E: 252 = 11111100 → 6 bits dans le 3ᵉ octet. 16 + 6 = /22. Bloc de 4 dans le 3ᵉ octet, 1022 hôtes.
+
+Q: Il faut 50 hôtes dans un sous-réseau. Quel est le préfixe le plus petit qui convient ?
++ /26
+- /27
+- /25
+- /28
+E: /27 = 30 hôtes, trop petit. /26 = 62 hôtes, ça passe. On cherche la plus petite puissance de 2 dont (2ⁿ − 2) ≥ besoin.
+
+Q: Il faut 500 hôtes dans un sous-réseau. Quel préfixe choisir ?
++ /23
+- /24
+- /22
+- /25
+E: /24 = 254, trop petit. /23 = 9 bits d'hôte = 512 − 2 = 510 hôtes.
+
+Q: En combien de /26 peut-on découper un /24 ?
++ 4
+- 2
+- 8
+- 64
+E: 2 bits empruntés (26 − 24) → 2² = 4 sous-réseaux de 64 adresses : .0, .64, .128, .192.
+
+Q: Quelle est l'adresse réseau de 10.20.30.40/16 ?
++ 10.20.0.0
+- 10.0.0.0
+- 10.20.30.0
+- 10.20.30.40
+E: /16 garde les deux premiers octets et met le reste à zéro. Broadcast : 10.20.255.255.
+
+Q: Quelle est l'adresse réseau de 192.168.1.200/29 ?
++ 192.168.1.200
+- 192.168.1.192
+- 192.168.1.196
+- 192.168.1.208
+E: Blocs de 8 : 192, 200, 208… 200 est un multiple de 8, c'est donc l'adresse réseau. Hôtes .201 à .206, broadcast .207.
+
+Q: 192.168.1.130 est-elle une adresse d'hôte valide dans 192.168.1.128/25 ?
++ Oui, les hôtes vont de .129 à .254
+- Non, c'est l'adresse réseau
+- Non, c'est le broadcast
+- Non, elle est dans 192.168.1.0/25
+E: /25 : blocs de 128. Le second bloc va de 128 (réseau) à 255 (broadcast).
+
+Q: Quelle est la méthode rapide pour trouver la taille d'un bloc ?
++ 256 moins la valeur du masque dans l'octet qui change
+- 2 puissance le préfixe, moins 2 adresses réservées
+- 32 moins le préfixe, multiplié ensuite par 8
+- 255 divisé par le nombre de bits du préfixe
+E: /27 → masque 224 → 256 − 224 = 32. Les réseaux commencent aux multiples de 32 (0, 32, 64…).
+
+Q: Combien de sous-réseaux /30 dans un /24 ?
++ 64
+- 32
+- 128
+- 4
+E: 6 bits empruntés (30 − 24) → 2⁶ = 64 blocs de 4 adresses.
+
+Q: Que permet le VLSM ?
++ Utiliser des masques de tailles différentes dans un même plan
+- Créer plusieurs VLAN sur un switch sans passer par un routeur
+- Agrandir automatiquement un sous-réseau quand il est saturé
+- Donner le même masque à tous les sous-réseaux d'un site
+E: On commence par le plus gros besoin : un /25 pour les postes, un /27 pour les serveurs, des /30 pour les liens.
+
+Q: Que représente 0.0.0.0/0 dans une table de routage ?
++ La route par défaut, utilisée faute de route plus précise
+- Une route désactivée, gardée dans la table pour mémoire
+- L'adresse de broadcast qui joint tous les réseaux connus
+- Le réseau de boucle locale, réservé à la machine elle-même
+E: Le routeur choisit toujours la route la plus précise (préfixe le plus long). 0.0.0.0/0 est la moins précise, d'où son rôle de dernier recours.
+
+## nettroub
+
+Q: Un utilisateur n'a « plus Internet ». Par quoi commencer ?
++ Vérifier le lien (câble ou Wi-Fi), l'IP obtenue, puis pinguer la passerelle
+- Réinstaller le navigateur, puis vider son cache et ses cookies
+- Redémarrer le serveur DNS de l'entreprise pour forcer la résolution
+- Ouvrir tous les ports du pare-feu pour vérifier qu'il n'est pas en cause
+E: Méthode du bas vers le haut : lien → IP → passerelle → IP publique (ping 1.1.1.1) → DNS (ping d'un nom) → application.
+
+Q: `ping 1.1.1.1` répond mais `ping google.com` échoue. Où est le problème ?
++ La résolution DNS
+- Le câble réseau
+- La passerelle par défaut
+- La carte réseau
+E: L'accès IP fonctionne, seul le nom ne se résout pas. Vérifie le serveur DNS configuré (`resolvectl status`, `nslookup`).
+
+Q: `curl http://serveur` répond « Connection refused ». Que conclure ?
++ La machine répond, mais rien n'écoute sur ce port
+- La machine est éteinte ou débranchée du réseau
+- Le nom du serveur ne se résout pas en adresse IP
+- Un pare-feu jette les paquets sans rien répondre
+E: Refused = réponse RST rapide. Vérifie le service (`systemctl status`) et `ss -tlnp`. Un DROP donnerait plutôt un timeout.
+
+Q: `curl` attend longtemps puis affiche « Connection timed out ». Cause la plus probable ?
++ Un pare-feu qui jette les paquets (DROP) ou une route manquante
+- Le service n'est pas démarré, donc le port est fermé
+- Le certificat TLS du serveur a expiré depuis la veille
+- Le mot de passe saisi est faux et le serveur l'ignore
+E: Personne ne répond, donc le client patiente jusqu'au délai maximal. Vérifie les règles du pare-feu et la route.
+
+Q: Quelle commande teste si un port TCP distant est ouvert, sans outil spécialisé ?
++ `nc -zv serveur 443`
+- `ping -p 443 serveur`
+- `dig serveur:443`
+- `ip route 443`
+E: `nc` (netcat) tente la connexion. Alternatives : `curl -v telnet://serveur:443` ou, en bash, `</dev/tcp/serveur/443`.
+
+Q: Quelle commande tcpdump capture le trafic HTTP sur eth0 sans résoudre les noms ?
++ `sudo tcpdump -i eth0 -nn port 80`
+- `sudo tcpdump -i eth0 http`
+- `sudo tcpdump -p 80 eth0`
+- `sudo tcpdump --http -i eth0`
+E: `-nn` = pas de résolution de noms ni de ports. `-w fichier.pcap` pour enregistrer et ouvrir ensuite dans Wireshark.
+
+Q: Pourquoi une capture sur eth0 reste vide quand une machine se contacte elle-même ?
++ Le trafic vers sa propre adresse passe par l'interface `lo`
+- tcpdump ne sait pas capturer le trafic HTTP en clair
+- Le pare-feu local empêche tcpdump de lire l'interface eth0
+- curl utilise UDP en local, il fallait filtrer sur UDP
+E: Vu dans le lab M2. Utilise `-i lo` ou `-i any`, ou lance le test depuis une autre machine.
+
+Q: Quelle commande Windows affiche la configuration IP complète (DNS, DHCP, MAC) ?
++ `ipconfig /all`
+- `ip a`
+- `netstat -all`
+- `ifconfig -a`
+E: `ipconfig /release` et `/renew` relancent la demande DHCP, `ipconfig /flushdns` vide le cache DNS.
+
+Q: Quelle commande PowerShell teste un port TCP distant ?
++ `Test-NetConnection serveur -Port 443`
+- `Get-NetPort -Computer serveur 443`
+- `Ping-Port -Target serveur -Tcp 443`
+- `Invoke-Port -Host serveur 443`
+E: Le résultat `TcpTestSucceeded : True` confirme que le port répond. Alias : `tnc`.
+
+Q: Deux machines ont la même adresse IP. Quel symptôme typique ?
++ Une connexion qui coupe et revient, avec un message de conflit d'adresse
+- Le DNS ne répond plus pour l'ensemble du réseau de l'entreprise
+- Le switch redémarre en boucle à cause des deux machines
+- Les mots de passe des deux utilisateurs ne fonctionnent plus
+E: Le cache ARP des autres machines bascule entre les deux MAC. `arping` ou la table ARP du switch aide à trouver le coupable.
+
+Q: Après un redémarrage, les VM du lab ont changé d'IP et `/etc/hosts` pointe vers les anciennes. Meilleure solution ?
++ Supprimer les lignes figées et s'appuyer sur le DNS du réseau (.mshome.net)
+- Redémarrer les VM jusqu'à ce qu'elles retrouvent leurs anciennes adresses
+- Désactiver le DHCP du Default Switch dans les réglages de Windows
+- Ajouter les nouvelles IP dans `/etc/hosts` sans retirer les anciennes
+E: Une entrée statique dans `/etc/hosts` passe avant le DNS et devient fausse dès que l'IP DHCP change. Vu dans le lab.
+
+Q: Un site web répond en HTTP mais pas en HTTPS. Quoi vérifier en premier ?
++ Que le service écoute sur 443 et que le pare-feu ouvre ce port
+- Que le DNS du site contient bien un enregistrement AAAA
+- Que le serveur a assez de RAM pour gérer le chiffrement
+- Que l'utilisateur a bien vidé le cache de son navigateur
+E: `ss -tlnp | grep 443` côté serveur, puis la règle de pare-feu, puis `curl -vk https://…` pour voir l'échange TLS.
+
+Q: Un VPN est connecté mais les serveurs internes ne répondent pas. Piste la plus probable ?
++ Les routes ou le DNS internes poussés par le VPN ne sont pas appliqués
+- La carte réseau du poste est tombée en panne au moment de la connexion
+- Le compte VPN de l'utilisateur est verrouillé depuis la veille
+- Le câble réseau du poste est débranché ou abîmé
+E: Vérifie `ip route` (ou `route print` sous Windows) et quel serveur DNS est utilisé pendant la connexion.
+
+## fw
+
+Q: Quelle politique par défaut recommande-t-on pour le trafic entrant d'un pare-feu ?
++ Tout refuser, puis autoriser seulement ce qui est nécessaire
+- Tout autoriser, puis bloquer ce qui est dangereux
+- Autoriser le web et bloquer le reste du trafic sortant
+- Tout autoriser pendant la journée
+E: Le « default deny » (liste blanche) est le principe de base. Avec ufw : `ufw default deny incoming`.
+
+Q: Quelle est la différence entre DROP et REJECT ?
++ DROP jette sans répondre ; REJECT renvoie un refus au client
+- REJECT jette sans répondre ; DROP renvoie un refus
+- DROP journalise, REJECT non
+- Ce sont des synonymes
+E: DROP → le client attend un timeout ; REJECT → réponse immédiate (RST ou ICMP). DROP donne moins d'informations à un attaquant.
+
+Q: Que signifie un pare-feu « stateful » ?
++ Il suit l'état des connexions et laisse passer les réponses aux connexions autorisées
+- Il garde un historique détaillé de tous les paquets pendant au moins un an
+- Il ne filtre que les adresses IP, sans jamais regarder les ports ni les protocoles
+- Il applique ses règles sans tenir compte de l'ordre dans lequel elles sont écrites
+E: La règle `ct state established,related accept` (nftables) laisse passer les réponses. Il ne faut ouvrir que le sens de l'initiation.
+
+Q: Avec ufw, quelle commande faut-il lancer AVANT `ufw enable` sur un serveur distant ?
++ `sudo ufw allow OpenSSH`
+- `sudo ufw reset`
+- `sudo ufw deny 22/tcp`
+- `sudo ufw default allow`
+E: Sinon la politique par défaut coupe ta session SSH. Toujours ouvrir l'accès d'administration en premier.
+
+Q: Que fait `sudo ufw allow from 172.17.48.0/20 to any port 80 proto tcp` ?
++ Autorise le port 80 seulement depuis le réseau 172.17.48.0/20
+- Autorise le port 80 depuis Internet, sauf le réseau 172.17.48.0/20
+- Bloque le port 80 pour toutes les machines de 172.17.48.0/20
+- Redirige le port 80 de ce serveur vers le réseau 172.17.48.0/20
+E: Restreindre la source est bien plus sûr qu'ouvrir un port à tous.
+
+Q: Comment afficher les règles ufw avec un numéro pour en supprimer une ?
++ `sudo ufw status numbered`, puis `sudo ufw delete N`
+- `sudo ufw list`, puis `sudo ufw remove N`
+- `sudo ufw show rules`, puis `sudo ufw clear N`
+- `sudo ufw status -n`, puis `sudo ufw drop N`
+E: Les règles sont évaluées dans l'ordre ; la première qui correspond s'applique.
+
+Q: Quelle est la relation entre ufw et nftables ?
++ ufw est une interface simplifiée qui génère les règles du noyau
+- ufw remplace le filtrage du noyau par son propre moteur
+- nftables est l'interface graphique qui pilote ufw
+- Aucune : ce sont deux pare-feux indépendants l'un de l'autre
+E: Le filtrage réel est fait par Netfilter dans le noyau. iptables, nftables, ufw et firewalld sont des façons de le configurer.
+
+Q: Dans nftables, quel est l'ordre de structure ?
++ Table → chaîne → règles
+- Règle → table → chaîne
+- Chaîne → règle → table
+- Zone → service → port
+E: Exemple du lab : `table inet lab`, chaîne `input` avec `hook input priority 0; policy drop;`, puis des règles.
+
+Q: Que veut dire la famille `inet` dans une table nftables ?
++ Les règles s'appliquent à la fois à IPv4 et à IPv6
+- Les règles s'appliquent seulement à Internet
+- Les règles s'appliquent seulement à IPv4
+- Les règles s'appliquent aux interfaces internes uniquement
+E: Avec iptables, il fallait deux outils (iptables et ip6tables). `inet` évite d'oublier IPv6.
+
+Q: Pourquoi le lab nftables lance-t-il `(sleep 180 && nft delete table inet lab) &` avant d'appliquer les règles ?
++ C'est un filet de sécurité qui retire les règles au bout de 3 minutes
+- C'est une pause pour laisser le service nftables finir de démarrer
+- C'est une temporisation pour appliquer les règles une à une
+- C'est une sauvegarde automatique de la configuration toutes les 3 minutes
+E: Si tout va bien, on annule le filet avec `kill $SAFETY`. Les pare-feux d'entreprise ont la même idée (« rollback » si pas de confirmation).
+
+Q: Comment rendre des règles nftables permanentes sur Debian/Ubuntu ?
++ Les écrire dans `/etc/nftables.conf` et activer le service nftables
+- Rien : elles sont enregistrées dès qu'on les tape dans le shell
+- Lancer `nft save --permanent` après chaque modification
+- Lancer `ufw enable`, qui recopie les règles de nftables au démarrage
+E: `sudo nft list ruleset > /etc/nftables.conf` puis `systemctl enable nftables`. Sans ça, elles disparaissent au redémarrage.
+
+Q: Qu'est-ce qu'une DMZ ?
++ Une zone isolée pour les serveurs exposés à Internet, séparée du réseau interne
+- Le réseau Wi-Fi des invités, séparé du réseau interne par un simple VLAN
+- Une zone sans pare-feu, où les serveurs sont joignables sans aucun filtrage
+- Le réseau réservé aux administrateurs, accessible seulement par VPN
+E: Si un serveur web en DMZ est compromis, le pare-feu empêche l'attaquant d'atteindre directement le réseau interne.
+
+Q: Qu'est-ce qu'un WAF ?
++ Un pare-feu applicatif qui filtre les requêtes HTTP (injections, XSS)
+- Un pare-feu Wi-Fi qui filtre les appareils sans fil (WPA, 802.1X)
+- Un pare-feu de réseau étendu qui relie les sites distants (WAN)
+- Un antivirus de messagerie qui filtre les pièces jointes (macros)
+E: Exemple : ModSecurity, Cloudflare WAF. Il travaille en couche 7, là où le pare-feu réseau ne voit que les IP et les ports.
+
+Q: Que désigne « NGFW » (pare-feu nouvelle génération) ?
++ Un pare-feu qui ajoute inspection applicative, IPS et identité au filtrage classique
+- Un pare-feu logiciel gratuit, installé directement sur chaque poste de travail
+- Un pare-feu réservé au cloud public, qui ne s'installe pas dans un datacenter
+- Un pare-feu sans règles écrites, qui décide seul grâce à l'intelligence artificielle
+E: Exemples : Fortinet FortiGate, Palo Alto, Stormshield (français, certifié ANSSI). OPNsense et pfSense sont des alternatives libres.
+
+Q: Quelle est la différence entre un IDS et un IPS ?
++ L'IDS détecte et alerte ; l'IPS, placé en coupure, peut bloquer
+- L'IPS détecte et alerte ; l'IDS, placé en coupure, peut bloquer
+- L'IDS protège les postes de travail ; l'IPS protège les serveurs
+- Aucune : ce sont deux marques concurrentes du même produit
+E: Suricata et Snort peuvent fonctionner dans les deux modes. En IPS, une fausse alerte peut couper un service légitime.
+
+Q: Sur OPNsense, dans quel ordre les règles d'une interface sont-elles évaluées ?
++ De haut en bas : la première règle qui correspond est appliquée
+- La dernière règle gagne toujours
+- Les règles de blocage sont toujours évaluées en premier
+- Dans l'ordre alphabétique de leur description
+E: Comme sur pfSense : place les règles les plus précises en haut. Les règles s'appliquent au trafic qui entre par l'interface.
+
+Q: Sur un pare-feu, pourquoi filtrer aussi le trafic sortant ?
++ Pour empêcher un poste infecté de joindre l'attaquant ou d'exfiltrer des données
+- Pour accélérer la navigation en réduisant le nombre de connexions sortantes
+- Parce que le trafic entrant est déjà entièrement chiffré par le fournisseur
+- Parce que la loi interdit aux entreprises tout trafic sortant non déclaré
+E: Un malware « appelle la maison » (C2). Limiter les sorties (DNS, HTTP/S via proxy uniquement) complique son travail.

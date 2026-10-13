@@ -1,0 +1,508 @@
+## virt
+
+Q: Qu'est-ce qu'un hyperviseur de type 1 ?
++ Un hyperviseur installé directement sur le matériel, sans système hôte classique
+- Un hyperviseur installé comme une application sur Windows ou macOS
+- Un conteneur Docker
+- Un émulateur de console de jeu
+E: Exemples : VMware ESXi, Proxmox VE (KVM), Hyper-V, Xen. Type 2 : VirtualBox, VMware Workstation.
+
+Q: Sur quelle technologie de virtualisation repose Proxmox VE ?
++ KVM/QEMU pour les VM, LXC pour les conteneurs
+- VMware ESXi pour les VM, Docker pour les conteneurs
+- Hyper-V pour les VM, Podman pour les conteneurs
+- VirtualBox pour les VM, LXD pour les conteneurs
+E: Proxmox est basé sur Debian. KVM est intégré au noyau Linux ; LXC fournit des conteneurs système légers.
+
+Q: Quelle est la différence entre une VM et un conteneur ?
++ La VM embarque son propre noyau ; le conteneur partage le noyau de l'hôte
+- Le conteneur embarque son propre noyau ; la VM partage celui de l'hôte
+- Une VM ne peut pas avoir de réseau
+- Il n'y a aucune différence
+E: Le conteneur démarre en une seconde et pèse moins, mais l'isolation est plus faible. Une VM Windows sur un hôte Linux est possible ; un conteneur Windows sur noyau Linux, non.
+
+Q: Qu'est-ce qu'un snapshot de VM ?
++ Une photo de l'état d'une VM à un instant, pour revenir en arrière
+- Une sauvegarde complète et autonome, stockée sur un autre serveur
+- Une copie de la VM démarrée en parallèle sur un autre hôte
+- Une capture d'écran de la console, gardée pour la documentation
+E: Un snapshot n'est PAS une sauvegarde : il dépend des disques d'origine. À utiliser avant une mise à jour risquée, et à supprimer ensuite.
+
+Q: Qu'est-ce que la migration à chaud (live migration) ?
++ Déplacer une VM en marche vers un autre hôte sans l'arrêter
+- Copier une VM éteinte vers un autre hôte pendant la nuit
+- Mettre à jour le système d'une VM sans la redémarrer
+- Convertir une VM en conteneur sans arrêter le service
+E: Nécessite un stockage partagé (Ceph, NFS, iSCSI) ou la copie du disque en même temps. Utile pour faire la maintenance d'un hôte.
+
+Q: Dans un cluster Proxmox, pourquoi faut-il un nombre impair de nœuds (ou un QDevice) ?
++ Pour garder le quorum : une majorité doit pouvoir décider
+- Pour équilibrer la charge électrique entre les baies
+- Parce que la licence Proxmox se vend par nombre impair
+- Pour que les sauvegardes se répartissent à parts égales
+E: Avec 2 nœuds coupés l'un de l'autre, aucun n'a la majorité (split-brain). Un 3ᵉ vote (nœud ou QDevice) tranche.
+
+Q: Quel outil de Proxmox sert à faire des sauvegardes dédupliquées et incrémentales des VM ?
++ Proxmox Backup Server (PBS)
+- Proxmox Mail Gateway
+- Veeam Agent pour Linux
+- rsync seul
+E: PBS déduplique par blocs, chiffre côté client et vérifie les sauvegardes. `vzdump` est l'outil de sauvegarde intégré de base.
+
+Q: Que signifie « thin provisioning » pour un disque virtuel ?
++ L'espace est consommé au fil des écritures, pas réservé d'avance
+- Le disque est volontairement bridé en vitesse pour économiser
+- Le disque reste en lecture seule tant que la VM est allumée
+- Le disque est chiffré et compressé à la volée par l'hyperviseur
+E: Pratique, mais attention au surengagement : si toutes les VM se remplissent, le stockage physique sature.
+
+Q: Qu'est-ce que la haute disponibilité (HA) dans un cluster de virtualisation ?
++ Les VM d'un hôte en panne redémarrent seules sur un autre hôte
+- Les VM ne s'arrêtent jamais, même pendant une panne d'hôte
+- Chaque VM tourne en deux exemplaires actifs en même temps
+- Chaque hôte possède deux alimentations et deux cartes réseau
+E: Il y a une courte coupure (le temps du redémarrage). La tolérance aux pannes sans coupure demande une réplication synchrone, plus coûteuse.
+
+Q: Quel outil a servi à créer les VM Ubuntu du lab sous Windows ?
++ Multipass
+- Vagrant
+- VirtualBox
+- Docker Desktop
+E: Multipass (Canonical) crée des VM Ubuntu avec cloud-init en une commande (`multipass launch --name node1 --memory 2G`), ici avec Hyper-V.
+
+Q: À quoi sert cloud-init ?
++ Configurer une VM à son premier démarrage : comptes, clés SSH, paquets
+- Sauvegarder automatiquement les VM vers un stockage dans le cloud
+- Migrer une VM d'un hyperviseur local vers AWS ou Azure
+- Surveiller les VM et redémarrer celles qui ne répondent plus
+E: Il lit un fichier « user-data » (YAML). C'est lui qui avait créé `50-cloud-init.conf` dans le dossier de config SSH du lab.
+
+## ceph
+
+Q: Qu'est-ce que Ceph ?
++ Un stockage distribué qui fournit du bloc, de l'objet et du fichier
+- Un hyperviseur distribué qui répartit les VM entre plusieurs hôtes
+- Un pare-feu distribué qui filtre le trafic entre les nœuds
+- Un orchestrateur qui place les conteneurs sur les nœuds
+E: Bloc = RBD (disques de VM), objet = RGW (compatible S3), fichier = CephFS. Intégré nativement à Proxmox.
+
+Q: Quel est le rôle d'un OSD dans Ceph ?
++ Stocker les données d'un disque et gérer leur réplication
+- Garder la carte du cluster et assurer le quorum
+- Fournir le tableau de bord web et les métriques
+- Gérer les métadonnées du système de fichiers CephFS
+E: En général, un OSD par disque. Les MON gardent la carte du cluster, le MGR fournit les métriques et le tableau de bord, le MDS gère CephFS.
+
+Q: Quel est le rôle des moniteurs (MON) dans Ceph ?
++ Maintenir la carte du cluster et le quorum
+- Stocker les données sur les disques
+- Servir les fichiers de CephFS aux clients
+- Répliquer les objets vers un second site
+E: On en déploie un nombre impair (3 ou 5) pour garder la majorité en cas de panne.
+
+Q: Quelle commande donne l'état de santé d'un cluster Ceph ?
++ `ceph -s` (ou `ceph status`)
+- `ceph health --all`
+- `systemctl status ceph`
+- `ceph osd list`
+E: Les états : HEALTH_OK, HEALTH_WARN, HEALTH_ERR. `ceph health detail` explique les avertissements, `ceph osd tree` montre les OSD.
+
+Q: Avec une réplication `size=3, min_size=2`, que se passe-t-il si 2 OSD portant les mêmes données tombent ?
++ Les accès à ces données sont bloqués jusqu'au retour d'une 2ᵉ copie
+- Les données concernées sont définitivement perdues pour le cluster
+- Le cluster continue normalement, en lecture comme en écriture
+- Le cluster entier s'arrête jusqu'à l'intervention d'un administrateur
+E: min_size = nombre minimum de copies disponibles pour servir les accès. En dessous, les PG concernés deviennent inactifs (lectures et écritures bloquées), mais rien n'est perdu : tout repart quand une copie revient. Avec 3 copies, on tolère la perte d'une copie sans interruption.
+
+Q: À quoi sert l'algorithme CRUSH dans Ceph ?
++ Calculer où placer chaque donnée selon la topologie, sans table centrale
+- Compresser les données avant de les écrire sur les OSD du cluster
+- Chiffrer les données de chaque client avec sa propre clé
+- Supprimer les blocs en double pour économiser de la place
+E: Les règles CRUSH peuvent exiger que les 3 copies soient sur 3 hôtes différents pour survivre à la perte d'un serveur complet.
+
+Q: Que signifie l'état HEALTH_WARN avec « pgs degraded » ?
++ Certains PG n'ont pas toutes leurs copies, souvent après la perte d'un OSD
+- Le cluster est plein et refuse désormais toute nouvelle écriture
+- Les données de certains PG sont perdues et doivent être restaurées
+- Le cluster est en maintenance programmée avec le drapeau noout
+E: Ceph reconstruit les copies manquantes automatiquement (recovery/backfill) si de la place existe sur les autres OSD.
+
+Q: Avant un redémarrage planifié d'un nœud Ceph, quelle commande évite une reconstruction inutile ?
++ `ceph osd set noout`
+- `ceph osd purge`
+- `ceph health mute`
+- `ceph osd out all`
+E: `noout` empêche Ceph de marquer les OSD « out » et de recopier les données pendant la maintenance. Ne pas oublier `ceph osd unset noout` après.
+
+Q: Quelle est la différence entre le stockage bloc, fichier et objet ?
++ Bloc : un disque brut ; fichier : une arborescence ; objet : des objets via API
+- Bloc : des objets via API ; fichier : un disque brut ; objet : une arborescence
+- Bloc : pour les sauvegardes ; fichier : pour les VM ; objet : pour les logs
+- Aucune : ce sont trois noms commerciaux du même type de stockage
+E: Exemples : iSCSI/RBD (bloc), NFS/SMB/CephFS (fichier), S3/MinIO/RGW (objet).
+
+Q: Qu'est-ce que le RAID 1 ?
++ Le miroir : les mêmes données écrites sur deux disques
+- La répartition des données sur deux disques, sans copie
+- La parité répartie sur au moins trois disques
+- La double parité répartie sur au moins quatre disques
+E: RAID 0 = performance sans redondance, RAID 1 = miroir, RAID 5 = parité (1 disque de tolérance), RAID 6 = double parité, RAID 10 = miroir + répartition.
+
+Q: Le RAID est-il une sauvegarde ?
++ Non : il protège d'une panne de disque, pas d'une suppression ou d'un chiffrement
+- Oui, à condition d'utiliser un RAID 1 avec des disques de marques différentes
+- Oui, à condition d'utiliser un RAID 6, qui tolère deux disques en panne
+- Oui, à condition que les disques soient neufs et surveillés par SMART
+E: Une suppression ou un chiffrement est répliqué instantanément sur tous les disques du RAID. Il faut une vraie sauvegarde à part.
+
+## docker
+
+Q: Quelle est la différence entre une image et un conteneur Docker ?
++ L'image est un modèle en lecture seule ; le conteneur en est une instance active
+- Le conteneur est un modèle en lecture seule ; l'image en est une instance active
+- L'image est une machine virtuelle complète ; le conteneur n'en est qu'un disque
+- Aucune : « image » et « conteneur » désignent le même objet dans Docker
+E: On peut lancer plusieurs conteneurs depuis la même image. `docker images` liste les images, `docker ps` les conteneurs actifs.
+
+Q: Que fait `docker run -d -p 8080:80 nginx` ?
++ Lance nginx en arrière-plan ; le port 8080 de l'hôte mène au port 80
+- Lance nginx en arrière-plan ; le port 80 de l'hôte mène au port 8080
+- Lance nginx au premier plan, sur le port 8080 du conteneur
+- Télécharge l'image nginx sans lancer aucun conteneur
+E: `-d` = détaché, `-p hôte:conteneur`. Ensuite `curl localhost:8080` atteint nginx.
+
+Q: Comment voir les logs d'un conteneur ?
++ `docker logs nom_du_conteneur`
+- `docker inspect --logs nom`
+- `journalctl -u docker nom`
+- `docker top --logs nom`
+E: Docker capture la sortie standard du processus principal. C'est pourquoi les applications en conteneur écrivent leurs logs sur stdout.
+
+Q: Comment ouvrir un shell dans un conteneur en fonctionnement ?
++ `docker exec -it nom_du_conteneur sh`
+- `docker run -it nom_du_conteneur`
+- `docker attach --shell`
+- `docker ssh nom_du_conteneur`
+E: `exec` lance une nouvelle commande dans le conteneur existant. `run` créerait un nouveau conteneur.
+
+Q: Pourquoi utiliser un volume pour les données d'une base de données en conteneur ?
++ Les données écrites dans le conteneur disparaissent quand on le supprime
+- Les volumes rendent le conteneur plus rapide que le disque de l'hôte
+- Docker refuse de lancer une base de données sans volume déclaré
+- Les volumes chiffrent automatiquement les données de la base
+E: `-v pgdata:/var/lib/postgresql/data`. Le conteneur doit être jetable, les données doivent vivre à part.
+
+Q: Dans un Dockerfile, quelle est la différence entre CMD et ENTRYPOINT ?
++ ENTRYPOINT fixe le programme lancé ; CMD donne ses arguments par défaut
+- CMD s'exécute à la construction de l'image ; ENTRYPOINT au lancement
+- ENTRYPOINT est obsolète : il a été remplacé par CMD dans Docker
+- CMD fixe le programme lancé ; ENTRYPOINT donne ses arguments par défaut
+E: Ce qui s'exécute à la construction, c'est `RUN`. Avec `ENTRYPOINT ["ping"]` et `CMD ["localhost"]`, `docker run img 8.8.8.8` ping 8.8.8.8.
+
+Q: Pourquoi est-il recommandé de ne pas faire tourner un conteneur en root ?
++ Si l'application est compromise, l'attaquant a moins de droits
+- Les processus root sont plus lents dans un conteneur
+- Docker refuse désormais de lancer des conteneurs en root
+- Un conteneur sans root consomme beaucoup moins de mémoire
+E: Instruction `USER app` dans le Dockerfile. On peut aussi utiliser Docker rootless ou Podman.
+
+Q: Pourquoi ajouter un utilisateur au groupe `docker` est-il sensible ?
++ Ce groupe donne en pratique les droits root sur l'hôte
+- Il empêche l'utilisateur d'utiliser sudo
+- Il supprime les conteneurs de l'utilisateur
+- Il n'a aucune conséquence
+E: Exemple : `docker run -v /:/host -it alpine chroot /host` donne un shell root sur l'hôte. À réserver aux administrateurs.
+
+Q: À quoi sert Docker Compose ?
++ Décrire et lancer une application multi-conteneurs dans un fichier YAML
+- Compresser les images Docker pour qu'elles prennent moins de place
+- Remplacer Kubernetes pour gérer des centaines de nœuds en production
+- Construire des images plus petites en supprimant les couches inutiles
+E: `docker compose up -d` démarre tout, `docker compose logs -f` suit les logs, `docker compose down` arrête et supprime.
+
+Q: Qu'est-ce qu'un build multi-étapes (multi-stage) dans un Dockerfile ?
++ Compiler dans une image, puis copier seulement le résultat dans une image légère
+- Construire en parallèle plusieurs images à partir d'un même Dockerfile
+- Lancer plusieurs conteneurs à la suite à partir d'une même image
+- Mettre à jour une image par petites étapes sans jamais la reconstruire
+E: L'image finale n'a ni compilateur ni outils de build : plus petite et moins de surface d'attaque.
+
+Q: Pourquoi éviter le tag `latest` en production ?
++ Il ne désigne pas une version fixe : un redéploiement peut en changer
+- Il est plus lent à télécharger que les tags de version précis
+- Il n'existe pas sur Docker Hub pour les images officielles
+- Il est réservé aux images construites par les éditeurs eux-mêmes
+E: Utiliser une version précise (`nginx:1.27.3`) ou même l'empreinte (`@sha256:…`) pour des déploiements reproductibles.
+
+Q: Quel outil analyse une image de conteneur à la recherche de vulnérabilités connues ?
++ Trivy
+- Lynis
+- Nmap
+- tcpdump
+E: `trivy image nginx:1.27` liste les CVE des paquets de l'image. À intégrer dans la CI.
+
+Q: Quelle commande supprime les conteneurs arrêtés, réseaux et images inutilisés ?
++ `docker system prune`
+- `docker rm -all`
+- `docker clean`
+- `docker image delete --unused`
+E: Ajouter `-a` pour toutes les images non utilisées et `--volumes` pour les volumes (attention aux données !). `docker system df` montre l'espace occupé.
+
+Q: Un conteneur redémarre en boucle. Quelle commande donne le code de sortie et l'erreur ?
++ `docker ps -a`, puis `docker logs` et `docker inspect`
+- `docker restart --debug`, puis `docker pull`
+- `docker top`, puis `docker stats --errors`
+- `docker images`, puis `docker history`
+E: `docker ps -a` montre `Exited (1)` ; `docker logs` montre l'erreur de l'application. Un code 137 indique souvent une mort par manque de mémoire (OOM, SIGKILL).
+
+## k8s
+
+Q: Qu'est-ce qu'un Pod dans Kubernetes ?
++ La plus petite unité déployable : un ou plusieurs conteneurs liés
+- Un serveur physique ou virtuel qui fait partie du cluster
+- Un fichier YAML qui décrit l'état voulu d'une application
+- Un réseau virtuel qui relie les conteneurs d'un même nœud
+E: On ne crée presque jamais de Pod à la main : un Deployment s'en charge et les recrée s'ils meurent.
+
+Q: À quoi sert un Deployment ?
++ Maintenir un nombre voulu de Pods identiques et gérer leurs mises à jour
+- Exposer un groupe de Pods sur le réseau avec une adresse stable
+- Stocker les mots de passe et les clés utilisés par les Pods
+- Ajouter un nouveau nœud au cluster et y installer kubelet
+E: `replicas: 3` → Kubernetes garde 3 Pods. Une nouvelle image est déployée progressivement (rolling update) et on peut revenir en arrière (`kubectl rollout undo`).
+
+Q: À quoi sert un Service Kubernetes ?
++ Donner une adresse et un nom stables pour joindre un groupe de Pods
+- Démarrer automatiquement les Pods au démarrage de chaque nœud
+- Sauvegarder l'état du cluster dans etcd à intervalle régulier
+- Gérer les comptes et les droits des utilisateurs du cluster
+E: Les Pods changent d'IP quand ils sont recréés. Types : ClusterIP (interne), NodePort, LoadBalancer.
+
+Q: Quelle commande affiche les événements et la raison d'un Pod qui ne démarre pas ?
++ `kubectl describe pod nom`
+- `kubectl get pod nom --why`
+- `kubectl top pod nom`
+- `kubectl run pod nom`
+E: La section Events en bas montre par exemple `ImagePullBackOff` ou `FailedScheduling`. `kubectl logs nom` montre les logs de l'application.
+
+Q: Que signifie l'état `CrashLoopBackOff` ?
++ Le conteneur démarre puis plante en boucle ; les essais sont espacés
+- L'image du conteneur n'a pas pu être téléchargée depuis le registre
+- Le Pod attend qu'un nœud ait assez de ressources pour l'accueillir
+- Le Pod a été supprimé et Kubernetes nettoie ses ressources
+E: Regarder `kubectl logs nom --previous` pour voir l'erreur du dernier démarrage raté.
+
+Q: Que signifie `ImagePullBackOff` ?
++ L'image ne peut pas être téléchargée (nom, tag ou accès au registre)
+- L'application plante juste après son démarrage dans le conteneur
+- Le nœud manque de mémoire pour lancer un conteneur de plus
+- Le Service ne trouve aucun Pod qui correspond à son sélecteur
+E: Vérifier l'orthographe de l'image et du tag, et l'`imagePullSecret` pour un registre privé.
+
+Q: Quelle est la différence entre une ConfigMap et un Secret ?
++ ConfigMap : configuration non sensible ; Secret : données sensibles
+- ConfigMap : données sensibles ; Secret : configuration non sensible
+- ConfigMap : fichiers de logs ; Secret : variables d'environnement
+- Aucune : le Secret est simplement l'ancien nom de la ConfigMap
+E: Base64 n'est pas un chiffrement : il faut activer le chiffrement au repos d'etcd et restreindre l'accès par RBAC.
+
+Q: Quel composant stocke tout l'état d'un cluster Kubernetes ?
++ etcd
+- kubelet
+- kube-proxy
+- CoreDNS
+E: etcd est une base clé-valeur distribuée. Le sauvegarder, c'est sauvegarder le cluster. kubelet tourne sur chaque nœud et lance les Pods.
+
+Q: Qu'est-ce qu'un namespace dans Kubernetes ?
++ Un espace logique qui sépare les ressources du cluster
+- Un nom de domaine DNS public attribué au cluster
+- Un nœud du cluster réservé à une seule équipe
+- Un type de volume partagé entre plusieurs Pods
+E: `kubectl get pods -n monitoring`. Les quotas et les droits RBAC peuvent s'appliquer par namespace.
+
+Q: Qu'est-ce que k3s ?
++ Une distribution Kubernetes légère, en un seul binaire
+- Un outil de sauvegarde et de restauration pour etcd
+- Un moteur de conteneurs concurrent de Docker
+- Un pare-feu dédié au trafic entre les Pods
+E: Installation en une commande, parfaite pour apprendre. kind et minikube sont d'autres options locales.
+
+Q: À quoi servent les « requests » et « limits » de ressources d'un conteneur ?
++ Requests : ressources réservées pour placer le Pod ; limits : maximum autorisé
+- Requests : maximum autorisé ; limits : ressources réservées pour placer le Pod
+- Requests : nombre de requêtes HTTP par seconde ; limits : nombre de Pods
+- Requests : ressources du nœud ; limits : ressources de tout le cluster
+E: Un conteneur qui dépasse sa limite mémoire est tué (OOMKilled). Sans requests, l'ordonnanceur place les Pods à l'aveugle.
+
+Q: Qu'est-ce que Helm ?
++ Le gestionnaire de paquets de Kubernetes, basé sur des charts
+- Le tableau de bord graphique officiel de Kubernetes
+- Un orchestrateur concurrent de Kubernetes, plus léger
+- Un outil qui chiffre les Secrets stockés dans etcd
+E: `helm install monitoring prometheus-community/kube-prometheus-stack`. Les valeurs se personnalisent dans un fichier `values.yaml`.
+
+## iac
+
+Q: Qu'est-ce que l'Infrastructure as Code (IaC) ?
++ Décrire l'infrastructure dans des fichiers versionnés, appliqués automatiquement
+- Écrire des scripts directement sur les serveurs de production, au besoin
+- Installer les serveurs à la main en suivant une procédure imprimée
+- Documenter l'infrastructure dans un wiki mis à jour chaque trimestre
+E: Avantages : reproductible, revu en merge request, historique Git, moins d'erreurs manuelles. Outils : Ansible, Terraform/OpenTofu.
+
+Q: Quelle est la différence principale entre Ansible et Terraform ?
++ Ansible configure des machines existantes ; Terraform crée les ressources
+- Terraform configure des machines existantes ; Ansible crée les ressources
+- Ansible ne fonctionne que sur Windows ; Terraform que sur Linux
+- Aucune : Terraform est l'ancien nom commercial d'Ansible
+E: On les combine souvent : Terraform crée la VM, Ansible l'installe. OpenTofu est le fork libre de Terraform.
+
+Q: Comment Ansible se connecte-t-il aux serveurs Linux ?
++ En SSH, sans agent à installer sur les serveurs
+- Avec un agent Ansible sur chaque serveur
+- Par le port 443 vers un serveur central
+- Par une clé USB
+E: Il faut seulement Python et un accès SSH sur la cible. Pour Windows, Ansible utilise WinRM ou SSH.
+
+Q: Que signifie « idempotent » pour une tâche Ansible ?
++ Relancée, elle donne le même résultat sans rien changer d'inutile
+- Elle ne peut être lancée qu'une seule fois sur chaque serveur
+- Elle s'exécute en parallèle sur tous les serveurs en même temps
+- Elle chiffre automatiquement les variables qu'elle utilise
+E: Au 2ᵉ passage, Ansible affiche `ok` au lieu de `changed`. C'est pour ça qu'on préfère les modules (`apt`, `copy`) au module `shell`.
+
+Q: Quel fichier liste les machines que gère Ansible ?
++ L'inventaire (inventory)
+- Le playbook
+- Le rôle
+- Le fichier ansible.cfg seul
+E: L'inventaire (INI ou YAML) regroupe les hôtes : `[web]`, `[db]`. Le playbook décrit ce qu'on fait sur ces groupes.
+
+Q: Quelle commande teste la connexion d'Ansible à tous les hôtes de l'inventaire ?
++ `ansible all -i inventory -m ping`
+- `ansible-playbook ping.yml --all`
+- `ansible ping all`
+- `ssh all ping`
+E: Le module ping vérifie SSH + Python sur la cible (ce n'est pas un ping ICMP). Réponse attendue : `pong`.
+
+Q: Que fait l'option `--check` d'ansible-playbook ?
++ Simule l'exécution et montre ce qui changerait, sans rien modifier
+- Vérifie seulement la syntaxe YAML du playbook, sans contacter les hôtes
+- Vérifie que tous les hôtes de l'inventaire répondent au ping ICMP
+- Exécute le playbook deux fois pour vérifier qu'il est idempotent
+E: Avec `--diff`, on voit aussi les différences de fichiers. Pour la syntaxe seule : `--syntax-check`.
+
+Q: À quoi sert un « handler » dans Ansible ?
++ Une tâche lancée seulement si une autre l'a notifiée après un changement
+- Une tâche lancée seulement si la tâche précédente a échoué
+- Une tâche lancée à chaque exécution, avant toutes les autres tâches
+- Un inventaire dynamique qui récupère la liste des hôtes dans le cloud
+E: `notify: reload nginx` : nginx n'est rechargé que si sa configuration a vraiment changé, et une seule fois à la fin.
+
+Q: Comment protéger un mot de passe utilisé dans un playbook Ansible ?
++ Le chiffrer avec Ansible Vault
+- L'écrire en base64 dans le playbook
+- Le mettre dans un commentaire
+- Le passer en majuscules
+E: `ansible-vault encrypt_string` ou `ansible-vault create secrets.yml`, puis `--ask-vault-pass` à l'exécution.
+
+Q: Dans Terraform, que fait `terraform plan` ?
++ Affiche les changements prévus, sans rien modifier
+- Applique les changements décrits dans le code
+- Supprime toutes les ressources gérées par le code
+- Télécharge les providers, sans rien comparer
+E: Le cycle : `init` (providers) → `plan` (prévisualiser) → `apply` (appliquer). `destroy` supprime tout.
+
+Q: À quoi sert le fichier d'état (state) de Terraform ?
++ Mémoriser le lien entre le code et les ressources réellement créées
+- Stocker les logs détaillés de chaque exécution de Terraform
+- Lister les utilisateurs autorisés à lancer `terraform apply`
+- Sauvegarder le contenu des disques des VM créées par Terraform
+E: Il peut contenir des secrets : on le stocke dans un backend distant protégé et verrouillé, jamais dans Git.
+
+Q: Qu'est-ce que YAML, utilisé par Ansible, Docker Compose et Kubernetes ?
++ Un format de données lisible où l'indentation définit la structure
+- Un langage de programmation compilé, spécialisé dans l'automatisation
+- Un format binaire compact, illisible sans outil spécialisé
+- Un protocole réseau qui transporte les configurations entre serveurs
+E: Piège classique : une tabulation ou un mauvais décalage casse le fichier. `yamllint` aide à vérifier.
+
+Q: Qu'est-ce qu'une pipeline CI/CD ?
++ Des étapes automatiques à chaque modification : tests, build, déploiement
+- Un câble à très haut débit qui relie deux datacenters de l'entreprise
+- Un outil de supervision qui surveille les serveurs de production
+- Un type de sauvegarde incrémentale déclenchée à chaque commit
+E: CI = intégration continue (tester chaque changement), CD = livraison ou déploiement continu. Outils : GitLab CI, GitHub Actions, Jenkins.
+
+Q: Qu'est-ce que GitOps ?
++ Git est la source de vérité : un outil applique l'état décrit dans le dépôt
+- Héberger les dépôts Git sur un serveur Windows de l'entreprise
+- Faire des sauvegardes complètes des serveurs dans un dépôt Git
+- Un service payant de GitHub qui déploie le code sur ses serveurs
+E: Exemples : Argo CD, Flux pour Kubernetes. Un changement = une merge request, revue et traçable.
+
+## sup
+
+Q: Quelle est la différence entre supervision (monitoring) et observabilité ?
++ Supervision : indicateurs connus ; observabilité : comprendre l'imprévu
+- Supervision : comprendre l'imprévu ; observabilité : indicateurs connus
+- Supervision : uniquement les logs ; observabilité : uniquement le réseau
+- Aucune : observabilité est le nouveau nom marketing de la supervision
+E: Les trois piliers de l'observabilité : métriques, logs, traces.
+
+Q: Comment Prometheus récupère-t-il les métriques ?
++ Il va chercher (pull) les métriques sur un point HTTP `/metrics`
+- Les cibles lui envoient leurs métriques par e-mail chaque minute
+- Il lit directement les fichiers de logs des machines par SSH
+- Il interroge uniquement les équipements en SNMP sur le port 161
+E: Les « exporters » exposent ces métriques : node_exporter pour Linux (port 9100), blackbox_exporter pour tester des URL.
+
+Q: Quel outil sert généralement à afficher les métriques de Prometheus en tableaux de bord ?
++ Grafana
+- Kibana uniquement
+- Wireshark
+- Nagios
+E: Grafana se connecte à Prometheus, Loki, Elasticsearch, etc. Alertmanager gère l'envoi des alertes de Prometheus.
+
+Q: Qu'est-ce que Zabbix ?
++ Une solution libre de supervision : agents, SNMP, triggers et alertes
+- Un SIEM libre qui corrèle les logs pour détecter les intrusions
+- Un hyperviseur libre, concurrent de Proxmox et de VMware
+- Un outil libre de déploiement de configuration, comme Ansible
+E: Zabbix est très répandu en entreprise et chez les infogéreurs, avec des modèles (templates) prêts pour Linux, Windows, switches…
+
+Q: Quels indicateurs surveiller en priorité sur un serveur Linux ?
++ CPU, mémoire, disque (et inodes), charge, services et réseau
+- Uniquement la température des processeurs et des disques
+- Uniquement le nombre d'utilisateurs connectés en SSH
+- Uniquement la version du noyau et des paquets installés
+E: Une alerte disque à 80 % puis 90 % évite la panne. Surveiller aussi les certificats qui expirent et les sauvegardes.
+
+Q: Que sont les « golden signals » de la supervision d'un service ?
++ Latence, trafic, erreurs, saturation
+- CPU, RAM, disque, réseau
+- Disponibilité, prix, vitesse, sécurité
+- Logs, métriques, traces, alertes
+E: Popularisés par le livre SRE de Google. Ils décrivent l'expérience réelle des utilisateurs du service.
+
+Q: Qu'est-ce qu'un SLA ?
++ Un engagement contractuel de niveau de service (ex. 99,9 %)
+- Un type de sauvegarde à durée de rétention garantie (ex. 30 jours)
+- Un logiciel de supervision des accords avec les fournisseurs
+- Une alerte critique déclenchée en cas de panne majeure
+E: 99,9 % sur un mois ≈ 43 minutes d'indisponibilité autorisées. Le SLO est l'objectif interne, le SLI la mesure réelle.
+
+Q: Que signifie la « fatigue d'alerte » ?
++ Trop d'alertes inutiles, au point que l'équipe ignore aussi les vraies
+- Un serveur qui envoie ses alertes la nuit, quand personne ne les lit
+- Une alerte qui se répète tous les jours à la même heure sans raison
+- Une panne du système d'alertes, qui n'envoie plus de notifications
+E: Une bonne alerte est actionnable : elle demande une action humaine. Les autres deviennent des tableaux de bord ou des rapports.
+
+Q: Pourquoi superviser la date d'expiration des certificats TLS ?
++ Un certificat expiré coupe le service : panne fréquente et évitable
+- Pour éviter de payer deux fois le renouvellement du même certificat
+- Parce que les certificats proches de l'expiration ralentissent le site
+- Ce n'est pas nécessaire : les navigateurs ignorent les dates d'expiration
+E: Alerter 30 jours puis 7 jours avant. Avec Let's Encrypt (90 jours), automatiser le renouvellement et vérifier qu'il fonctionne.

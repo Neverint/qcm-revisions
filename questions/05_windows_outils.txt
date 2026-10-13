@@ -1,0 +1,494 @@
+## win
+
+Q: Qu'est-ce qu'Active Directory ?
++ L'annuaire Microsoft qui centralise comptes, groupes, ordinateurs et règles
+- L'antivirus Microsoft qui protège les postes et les serveurs d'un domaine
+- Le système de fichiers de Windows Server, qui remplace NTFS sur les serveurs
+- Le service de messagerie de Microsoft, installé sur les serveurs locaux
+E: Les contrôleurs de domaine (DC) hébergent l'annuaire et authentifient les utilisateurs (Kerberos). Entra ID en est la version cloud, avec un fonctionnement différent.
+
+Q: Quel protocole d'authentification est utilisé par défaut dans un domaine Active Directory ?
++ Kerberos
+- NTLM uniquement
+- RADIUS
+- OAuth
+E: NTLM reste utilisé en secours (accès par IP, anciennes applications) mais il est plus faible. Kerberos repose sur des tickets et sur l'heure.
+
+Q: Pourquoi le DNS est-il critique pour Active Directory ?
++ Les postes trouvent les contrôleurs de domaine via des enregistrements SRV
+- Le DNS stocke les mots de passe hachés des utilisateurs du domaine
+- Le DNS remplace Kerberos pour authentifier les postes du domaine
+- Il ne l'est pas : AD fonctionne aussi bien avec un DNS public
+E: Un poste configuré avec un DNS public (8.8.8.8) au lieu du DNS du domaine ne peut pas rejoindre ni trouver le domaine.
+
+Q: Qu'est-ce qu'une GPO ?
++ Une stratégie qui applique des réglages aux utilisateurs ou ordinateurs d'une OU
+- Un groupe de sécurité qui donne accès aux partages et imprimantes d'une OU
+- Un contrôleur de domaine en lecture seule, placé dans un site distant
+- Une sauvegarde de l'annuaire Active Directory, prise chaque nuit
+E: Exemples : fond d'écran, mappage de lecteurs, règles de mot de passe, pare-feu Windows. Appliquée par ordre LSDOU (Local, Site, Domaine, OU).
+
+Q: Quelle commande force l'application immédiate des GPO sur un poste ?
++ `gpupdate /force`
+- `gpresult /r`
+- `ipconfig /renew`
+- `sfc /scannow`
+E: `gpresult /r` (ou `/h rapport.html`) montre quelles GPO s'appliquent réellement : utile pour comprendre pourquoi un réglage n'est pas appliqué.
+
+Q: Qu'est-ce qu'une OU (unité d'organisation) dans AD ?
++ Un conteneur pour ranger les objets, y lier des GPO et déléguer des droits
+- Un groupe de sécurité qui donne accès à un partage de fichiers
+- Un contrôleur de domaine secondaire, utilisé en cas de panne
+- Un site géographique qui regroupe les sous-réseaux d'une agence
+E: On applique les GPO aux OU, pas aux groupes. On donne les droits sur les ressources aux groupes.
+
+Q: Quelle est la bonne pratique pour donner accès à un dossier partagé ?
++ Mettre les utilisateurs dans des groupes et donner les droits aux groupes
+- Donner les droits directement à chaque utilisateur, un par un
+- Donner « Contrôle total » au groupe « Tout le monde » sur le partage
+- Partager le dossier sans aucun droit NTFS, pour simplifier
+E: AGDLP : Account → Global group → Domain Local group → Permission. Ajouter ou retirer quelqu'un ne demande alors que de changer un groupe.
+
+Q: Sur un partage Windows, comment se combinent les droits de partage et les droits NTFS ?
++ C'est le plus restrictif des deux qui s'applique, depuis le réseau
+- C'est le plus permissif des deux qui s'applique, depuis le réseau
+- Seuls les droits de partage comptent, les droits NTFS sont ignorés
+- Seuls les droits NTFS comptent, les droits de partage sont ignorés
+E: Pratique courante : partage en « Contrôle total » pour les utilisateurs authentifiés, et réglage fin en NTFS.
+
+Q: Quel outil Microsoft synchronise les comptes AD locaux vers Entra ID (Azure AD) ?
++ Microsoft Entra Connect
+- Microsoft Intune
+- Windows Server Update Services
+- Microsoft Defender for Identity
+E: Il permet aux utilisateurs d'avoir la même identité sur site et dans Microsoft 365 (synchronisation du hash du mot de passe, authentification directe ou fédération).
+
+Q: À quoi sert Microsoft Intune ?
++ Gérer les appareils (MDM) et les applications : conformité, déploiement
+- Héberger les boîtes mail des utilisateurs dans le cloud Microsoft
+- Remplacer Active Directory sur site pour l'authentification Kerberos
+- Sauvegarder les serveurs Windows et restaurer leurs fichiers
+E: Couplé à l'accès conditionnel d'Entra ID : un appareil non conforme (pas de chiffrement, OS trop vieux) peut être bloqué.
+
+Q: Qu'est-ce que l'accès conditionnel dans Entra ID ?
++ Des règles qui autorisent, bloquent ou exigent le MFA selon le contexte
+- Un pare-feu matériel qui filtre l'accès aux services Microsoft 365
+- Un compte administrateur de secours, utilisé en cas de blocage
+- Un outil de sauvegarde des boîtes mail et des fichiers OneDrive
+E: Exemple : MFA obligatoire hors du réseau de l'entreprise, blocage des pays non prévus, exigence d'un appareil conforme.
+
+Q: Quel rôle Microsoft 365 donne le contrôle total du tenant ?
++ Administrateur général (Global Administrator)
+- Administrateur Exchange
+- Administrateur du support technique
+- Lecteur général
+E: Moindre privilège : peu d'administrateurs généraux, avec MFA résistant au phishing, et des rôles plus limités pour le reste. Garder 2 comptes de secours (« break glass »).
+
+Q: Que contient le modèle de tiers (tiering) pour l'administration AD ?
++ Séparer les comptes admin par niveau et ne jamais utiliser un compte élevé sur un poste moins sûr
+- Classer les utilisateurs par ancienneté et leur donner plus de droits au fil du temps
+- Installer les serveurs dans trois salles différentes pour résister aux sinistres
+- Donner trois mots de passe différents à chaque compte administrateur du domaine
+E: Un compte admin du domaine connecté sur un poste compromis laisse ses identifiants en mémoire (risque de vol). Les PAW (postes d'admin dédiés) complètent le modèle.
+
+Q: Quelle commande PowerShell liste les services Windows ?
++ `Get-Service`
+- `Get-Process -Service`
+- `List-Service`
+- `Show-Services`
+E: `Get-Service | Where-Object Status -eq 'Running'`. `Restart-Service nom` relance un service.
+
+Q: Quelle commande PowerShell lit les derniers événements du journal Sécurité ?
++ `Get-WinEvent -LogName Security -MaxEvents 20`
+- `Get-Log Security`
+- `Read-EventLog -Security`
+- `Get-Content C:\Windows\Security.log`
+E: Filtrage par ID : `Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4625}`. L'outil graphique est l'Observateur d'événements (eventvwr).
+
+Q: Quelle commande Windows répare les fichiers système corrompus ?
++ `sfc /scannow`
+- `chkdsk /scannow`
+- `gpupdate /repair`
+- `netsh repair all`
+E: DISM répare l'image source que sfc utilise. `chkdsk` vérifie le système de fichiers du disque.
+
+Q: Quelle commande PowerShell trouve un utilisateur AD et ses propriétés ?
++ `Get-ADUser jdupont -Properties *`
+- `Get-LocalUser jdupont -Domain *`
+- `Find-ADAccount jdupont -All`
+- `net user jdupont /properties`
+E: Module ActiveDirectory (RSAT). `Unlock-ADAccount` déverrouille un compte, `Set-ADAccountPassword` change le mot de passe.
+
+Q: Qu'est-ce que WSUS ?
++ Un rôle Windows Server qui centralise et approuve les mises à jour
+- Un antivirus Microsoft qui analyse les postes depuis un serveur central
+- Un outil qui déploie Windows sur les postes neufs par le réseau
+- Une console qui sauvegarde les postes et serveurs Windows du parc
+E: Aujourd'hui, beaucoup d'entreprises passent à Windows Update for Business ou Autopatch via Intune.
+
+Q: Qu'est-ce que le WSL utilisé dans la formation ?
++ Le sous-système Windows pour Linux : un vrai noyau Linux dans une VM légère
+- Un émulateur Linux écrit en JavaScript, qui tourne dans le navigateur
+- Une édition de Windows Server sans interface graphique, pour les serveurs
+- Un hyperviseur concurrent de Hyper-V, fourni par Canonical
+E: WSL 2 utilise la plateforme de virtualisation de Hyper-V. Le lab y faisait tourner Ubuntu 24.04 et Docker Engine.
+
+## endp
+
+Q: Quelle est la différence entre un antivirus classique et un EDR ?
++ L'antivirus repère surtout des signatures ; l'EDR analyse les comportements et permet d'agir
+- L'EDR repère surtout des signatures ; l'antivirus analyse les comportements et permet d'agir
+- L'antivirus protège les serveurs ; l'EDR protège seulement les téléphones mobiles
+- Aucune : EDR est le nom commercial des antivirus vendus aux entreprises
+E: Exemples d'EDR : Microsoft Defender for Endpoint, CrowdStrike Falcon, SentinelOne, HarfangLab (français). XDR étend la corrélation au-delà des postes.
+
+Q: Qu'est-ce qu'un MDM ?
++ Un outil de gestion des appareils : inscription, configuration, effacement
+- Un modèle de données utilisé par les serveurs de messagerie d'entreprise
+- Un type de malware qui prend le contrôle à distance des téléphones mobiles
+- Une méthode de déploiement des mises à jour du BIOS sur tout le parc
+E: Exemples : Intune, Jamf (Mac), Workspace ONE. Permet d'effacer un appareil perdu ou volé.
+
+Q: Un utilisateur signale un ordinateur très lent. Bonne démarche ?
++ Questionner, observer le gestionnaire des tâches, puis isoler la cause
+- Réinstaller Windows tout de suite pour repartir sur une base propre
+- Commander un nouvel ordinateur, plus puissant, pour l'utilisateur
+- Lui demander de redémarrer, puis clore le ticket sans vérifier
+E: Une méthode : recueillir les faits, reproduire, faire une hypothèse, tester, corriger, vérifier avec l'utilisateur, documenter.
+
+Q: Un utilisateur a cliqué sur un lien d'hameçonnage et saisi son mot de passe. Que faire en priorité ?
++ Changer son mot de passe, révoquer ses sessions, vérifier MFA et règles mail, alerter le SOC
+- Supprimer le mail de sa boîte, puis clore le sujet sans prévenir personne d'autre
+- Le signaler à son manager, puis attendre la prochaine campagne de sensibilisation
+- Formater son poste immédiatement, avant toute analyse, pour éviter la propagation
+E: Les attaquants créent souvent une règle de transfert automatique des mails : à vérifier. Rester bienveillant : un utilisateur qui signale vite est un atout.
+
+Q: Qu'est-ce qu'une image « master » ou « golden image » pour les postes ?
++ Un système modèle déjà configuré, déployé sur de nombreuses machines
+- La photo officielle d'un employé, utilisée dans l'annuaire de l'entreprise
+- Une sauvegarde complète du serveur, prise juste après son installation
+- Une image Docker de référence, utilisée pour tous les conteneurs
+E: Aujourd'hui on passe souvent à Windows Autopilot : le poste livré neuf se configure tout seul à la connexion avec Intune.
+
+Q: Que signifie le niveau N1 / N2 / N3 dans un support informatique ?
++ N1 : premier contact et cas simples ; N2 : techniciens experts ; N3 : spécialistes ou éditeur
+- N1 : spécialistes ou éditeur ; N2 : techniciens experts ; N3 : premier contact et cas simples
+- N1 : site principal ; N2 : agences régionales ; N3 : télétravailleurs et nomades
+- N1 : tickets de priorité haute ; N2 : priorité moyenne ; N3 : priorité basse
+E: L'escalade doit être documentée : ce qui a été vérifié, les messages d'erreur, les captures, pour que le niveau suivant ne recommence pas tout.
+
+Q: Qu'est-ce que le PXE ?
++ Démarrer une machine par le réseau pour l'installer sans clé USB
+- Un format d'image disque compressé, utilisé pour cloner les postes
+- Un protocole de messagerie chiffrée entre les postes d'un même réseau
+- Un câble réseau blindé qui alimente aussi le poste en électricité
+E: Utilise DHCP pour trouver le serveur, puis TFTP ou HTTP pour charger l'installateur. Exemples : WDS/MDT, FOG, iPXE.
+
+Q: Quel outil gratuit permet de prendre la main à distance avec l'accord de l'utilisateur sous Windows ?
++ Assistance rapide
+- Windows Defender
+- Observateur d'événements
+- Planificateur de tâches
+E: Toujours avec l'accord de l'utilisateur. Attention : les escrocs au faux support utilisent aussi ces outils.
+
+## script
+
+Q: Quelle doit être la première ligne d'un script bash ?
++ `#!/usr/bin/env bash`
+- `// bash`
+- `<?bash ?>`
+- `#include bash`
+E: Le « shebang » indique l'interpréteur. Puis `chmod +x script.sh` pour pouvoir le lancer avec `./script.sh`.
+
+Q: Que fait `set -euo pipefail` en début de script bash ?
++ Stopper à la 1ʳᵉ erreur, refuser les variables non définies, vérifier les pipes
+- Afficher chaque commande avant de l'exécuter, pour faciliter le débogage
+- Exécuter le script en parallèle sur tous les cœurs disponibles du processeur
+- Masquer les messages d'erreur pour que la sortie du script reste lisible
+E: `-e` stoppe sur erreur, `-u` sur variable inconnue, `pipefail` fait échouer un pipe si une de ses commandes échoue. `set -x` affiche chaque commande (débogage).
+
+Q: Que contient la variable `$?` en bash ?
++ Le code de retour de la dernière commande
+- Le nombre d'arguments passés au script
+- Le PID du processus du script en cours
+- Le nom du script tel qu'il a été lancé
+E: `$#` = nombre d'arguments, `$$` = PID, `$0` = nom du script, `$1` = premier argument, `$@` = tous les arguments.
+
+Q: Pourquoi mettre des guillemets autour des variables (`"$fichier"`) ?
++ Pour éviter que les espaces découpent la valeur en plusieurs mots
+- Pour rendre la variable en lecture seule dans tout le script
+- Pour que la variable s'affiche en couleur dans le terminal
+- Pour que la variable soit exportée vers les processus enfants
+E: Avec `rm $fichier` et un nom « mon fichier », bash supprime « mon » et « fichier ». `shellcheck` repère ces erreurs.
+
+Q: Quel test bash vérifie qu'un fichier existe ?
++ `[ -f "$fichier" ]`
+- `[ -e $fichier == true ]`
+- `if exists "$fichier"`
+- `[ "$fichier" -exists ]`
+E: `-f` = fichier ordinaire, `-d` = dossier, `-e` = existe (n'importe quel type), `-s` = non vide, `-x` = exécutable.
+
+Q: Que fait `for f in /var/log/*.log; do echo "$f"; done` ?
++ Parcourt chaque fichier .log de /var/log et affiche son nom
+- Parcourt chaque fichier .log de /var/log et le supprime
+- Parcourt chaque fichier .log de /var/log et affiche son contenu
+- Compte les fichiers .log de /var/log et affiche le total
+E: Boucle de base. Remplacer `echo` par `gzip`, `wc -l`, etc. pour traiter chaque fichier.
+
+Q: Quel outil vérifie un script bash et signale les erreurs courantes ?
++ shellcheck
+- bash --lint
+- pylint
+- yamllint
+E: `shellcheck script.sh` détecte les variables sans guillemets, les tests mal écrits, etc. Réflexe à prendre avant une revue de code.
+
+Q: En PowerShell, quelle est la particularité du pipeline par rapport à bash ?
++ Il transmet des objets avec des propriétés, pas du texte
+- Il transmet uniquement du texte, découpé ligne par ligne
+- Il n'existe pas : PowerShell n'accepte qu'une commande par ligne
+- Il est limité à deux commandes, l'une après l'autre
+E: `Get-Process | Sort-Object CPU -Descending | Select-Object -First 5 Name, CPU` : on trie et filtre sur des propriétés, sans découper du texte.
+
+Q: Quelle commande PowerShell exporte une liste d'objets en fichier CSV ?
++ `Export-Csv rapport.csv -NoTypeInformation`
+- `Out-Csv -Path rapport.csv -NoHeader`
+- `Save-Csv rapport.csv -NoTypeInformation`
+- `ConvertTo-File rapport.csv -Format Csv`
+E: Exemple : `Get-ADUser -Filter * | Select Name, Enabled | Export-Csv users.csv -NoTypeInformation`. `Import-Csv` fait l'inverse.
+
+Q: En Python, quel module permet de lancer une commande système et de récupérer sa sortie ?
++ `subprocess`
+- `sys`
+- `os.path`
+- `shutil`
+E: `subprocess.run(["df", "-h"], capture_output=True, text=True)`. Éviter `shell=True` avec des entrées extérieures (injection de commandes).
+
+Q: En Python, comment lire un fichier ligne par ligne proprement ?
++ `with open("fichier.log") as f:` puis `for ligne in f:`
+- `f = open("fichier.log").readall()` puis `print(f)`
+- `for ligne in read("fichier.log", lines=True):`
+- `with file.lines("fichier.log") as f:` puis `print(f)`
+E: `with` ferme automatiquement le fichier, même en cas d'erreur. Lire ligne par ligne évite de charger un énorme log en mémoire.
+
+Q: Quel module Python lit et écrit du JSON ?
++ `json`
+- `yaml`
+- `csv`
+- `pickle`
+E: Très utile pour les API REST. Pour le YAML, il faut installer `PyYAML`. `pickle` ne doit pas être utilisé sur des données non fiables.
+
+Q: Pourquoi utiliser un environnement virtuel Python (venv) ?
++ Isoler les dépendances de chaque projet pour éviter les conflits
+- Rendre Python plus rapide en compilant le code à l'avance
+- Exécuter Python sans aucun système d'exploitation installé
+- Chiffrer le code source pour le protéger contre la copie
+E: `python3 -m venv .venv` puis `source .venv/bin/activate` et `pip install -r requirements.txt`.
+
+Q: Quelle méthode HTTP sert à lire une ressource dans une API REST ?
++ GET
+- POST
+- DELETE
+- PATCH
+E: GET = lire, POST = créer, PUT = remplacer, PATCH = modifier en partie, DELETE = supprimer.
+
+Q: Que signifie un code de réponse HTTP 403 ?
++ Accès interdit : la requête est comprise mais refusée
+- Page introuvable : la ressource demandée n'existe pas
+- Erreur interne : le serveur a planté en traitant la requête
+- Succès : la requête a été traitée correctement
+E: 200 = OK, 301/302 = redirection, 401 = non authentifié, 403 = interdit, 404 = introuvable, 500 = erreur serveur, 502 = mauvaise passerelle (proxy), 503 = service indisponible.
+
+Q: Que signifie une erreur 502 Bad Gateway renvoyée par nginx ?
++ nginx n'a pas obtenu de réponse valide de l'application derrière lui
+- La page demandée n'existe ni sur nginx ni dans l'application
+- Le client n'est pas authentifié et doit fournir un identifiant valide
+- Le certificat TLS de nginx a expiré et le navigateur refuse la page
+E: Vérifier que l'application en arrière-plan tourne et écoute bien sur l'adresse indiquée dans `proxy_pass`, et lire `/var/log/nginx/error.log`.
+
+Q: Quelle commande curl affiche seulement les en-têtes de la réponse HTTP ?
++ `curl -I https://site.fr`
+- `curl -H https://site.fr`
+- `curl --only-headers https://site.fr`
+- `curl -X HEADERS https://site.fr`
+E: `-I` envoie une requête HEAD. `-v` montre tout l'échange (TLS, en-têtes envoyés et reçus), `-L` suit les redirections.
+
+Q: Qu'est-ce qu'une expression régulière (regex) ?
++ Un motif pour rechercher ou valider du texte
+- Un type de variable qui stocke du texte
+- Un format de fichier de configuration
+- Une commande Linux qui trie les lignes
+E: `^` = début de ligne, `$` = fin, `.` = n'importe quel caractère, `*` = 0 ou plus, `+` = 1 ou plus, `[0-9]` = un chiffre. `grep -E` utilise les regex étendues.
+
+## git
+
+Q: Que fait `git clone URL` ?
++ Copie un dépôt distant et tout son historique sur ta machine
+- Crée un dépôt vide dans le dossier courant de ta machine
+- Envoie tes commits locaux vers le dépôt distant du serveur
+- Crée une copie du dépôt distant sur un autre serveur Git
+E: Ensuite `git pull` récupère les nouveautés, `git push` envoie tes commits.
+
+Q: Quel est l'ordre normal pour enregistrer un changement avec Git ?
++ `git add` → `git commit -m "message"` → `git push`
+- `git commit -m "message"` → `git add` → `git push`
+- `git push` → `git add` → `git commit -m "message"`
+- `git add` → `git push` → `git commit -m "message"`
+E: `add` prépare (zone d'index), `commit` enregistre localement, `push` envoie au serveur. `git status` montre où tu en es.
+
+Q: À quoi sert une branche Git ?
++ Travailler sur un changement isolé sans toucher la branche principale
+- Sauvegarder automatiquement le dépôt sur un second serveur distant
+- Supprimer l'historique ancien pour alléger la taille du dépôt
+- Chiffrer le code pour que seuls certains développeurs le lisent
+E: `git switch -c correctif` crée et ouvre une branche. On fusionne ensuite par une merge request (pull request) relue par un collègue.
+
+Q: Que fait `git log --oneline` ?
++ Affiche l'historique des commits, un par ligne
+- Affiche le contenu des fichiers modifiés
+- Supprime l'historique
+- Montre les branches distantes
+E: `git diff` montre les changements non commités, `git show <commit>` le détail d'un commit.
+
+Q: Qu'est-ce qu'une merge request (ou pull request) ?
++ Une demande de fusion d'une branche, avec revue de code et tests
+- Une demande d'accès en écriture adressée au propriétaire du dépôt
+- Une sauvegarde automatique de la branche sur le serveur distant
+- Un signalement de conflit entre deux fichiers modifiés en même temps
+E: C'est aussi là que tourne la CI. Le vocabulaire GitLab dit « merge request », GitHub dit « pull request ».
+
+Q: Que faut-il mettre dans `.gitignore` ?
++ Les fichiers à ne jamais versionner : secrets, fichiers générés, logs
+- La liste des développeurs autorisés à pousser sur le dépôt
+- Les fichiers les plus importants, à sauvegarder en priorité
+- Les commits à supprimer lors du prochain nettoyage du dépôt
+E: Exemples : `.env`, `*.log`, `node_modules/`, `.venv/`, `*.tfstate`.
+
+Q: Que se passe-t-il quand deux personnes modifient la même ligne et fusionnent ?
++ Un conflit : Git marque la zone et il faut choisir à la main
+- Git garde automatiquement la version la plus récente des deux
+- Git supprime les deux versions et laisse la ligne vide
+- Le dépôt est corrompu et doit être cloné à nouveau
+E: Les marqueurs `<<<<<<<`, `=======`, `>>>>>>>` délimitent les deux versions. On édite, puis `git add` et `git commit`.
+
+Q: Quelle commande annule un commit déjà poussé, sans réécrire l'historique partagé ?
++ `git revert <commit>`
+- `git reset --hard <commit>` puis `git push --force`
+- `git delete <commit>`
+- `git checkout <commit>`
+E: `revert` crée un nouveau commit qui fait l'inverse : sûr pour une branche partagée. `reset --hard` + force push réécrit l'historique des autres.
+
+## ai
+
+Q: Qu'est-ce qu'un grand modèle de langage (LLM) ?
++ Un réseau de neurones entraîné sur beaucoup de texte pour en générer
+- Une base de données de réponses toutes faites, rédigées par des humains
+- Un moteur de recherche qui recopie les pages web les plus pertinentes
+- Un langage de programmation conçu pour écrire des agents conversationnels
+E: Il génère le texte le plus probable, mot après mot (token après token). D'où le risque d'« hallucination » : une réponse plausible mais fausse.
+
+Q: Qu'est-ce qu'une « hallucination » d'une IA générative ?
++ Une réponse affirmée avec assurance mais fausse ou inventée
+- Un bug d'affichage qui mélange les caractères de la réponse
+- Une réponse beaucoup trop longue par rapport à la question
+- Un refus de répondre à une question pourtant légitime
+E: Pour l'admin système : toujours vérifier une commande proposée par une IA avant de l'exécuter, surtout avec sudo ou en production.
+
+Q: Qu'est-ce que le RAG (Retrieval-Augmented Generation) ?
++ Fournir au modèle des documents trouvés au moment de la question
+- Réentraîner entièrement le modèle chaque nuit avec les nouveaux documents
+- Compresser le modèle pour qu'il tourne sur un ordinateur portable
+- Limiter la longueur des réponses pour réduire les hallucinations
+E: Exemple : un assistant qui répond à partir de la documentation interne. Réduit les hallucinations et cite ses sources.
+
+Q: Qu'est-ce qu'une injection de prompt ?
++ Des instructions cachées dans un contenu qui détournent un assistant IA
+- Une injection SQL dans la base de données qui stocke les conversations
+- Une saturation du serveur d'IA par des milliers de requêtes simultanées
+- Un mot de passe trop court qui protège le compte d'un assistant IA
+E: C'est le risque n°1 du Top 10 OWASP pour les applications LLM. Parades : séparer données et instructions, limiter les droits des outils, validation humaine.
+
+Q: Quel est le principal risque de coller des données internes dans un chatbot public ?
++ La fuite de données confidentielles vers un service tiers
+- Le chatbot devient plus lent à cause du volume de données
+- Les données collées sont effacées du poste de l'utilisateur
+- Le chatbot refuse les données qui ne sont pas publiques
+E: Il faut suivre la politique de l'entreprise : outils validés, comptes professionnels, pas de secrets, de données personnelles ni de code client.
+
+Q: Qu'est-ce qu'un agent IA ?
++ Un modèle qui enchaîne des actions avec des outils pour atteindre un but
+- Un employé chargé de former ses collègues à l'utilisation de l'IA
+- Un antivirus qui utilise l'IA pour détecter les fichiers malveillants
+- Un modèle limité aux questions simples, sans accès à aucun outil
+E: Plus il a d'outils et de droits, plus il faut de garde-fous : moindre privilège, journalisation, validation humaine des actions sensibles.
+
+Q: Qu'est-ce que le protocole MCP (Model Context Protocol) ?
++ Un standard ouvert pour relier des assistants IA à des outils et données
+- Un protocole de routage dynamique entre les routeurs d'un réseau
+- Un format de compression des modèles d'IA pour les téléphones
+- Un langage de requêtes pour interroger les bases de données SQL
+E: Un serveur MCP expose des outils (lire des fichiers, interroger une API). Il faut le traiter comme n'importe quel logiciel : origine, droits, mises à jour.
+
+Q: Qu'est-ce que l'AI Act européen ?
++ Le règlement européen qui encadre l'IA selon son niveau de risque
+- Une certification européenne pour les ingénieurs en intelligence artificielle
+- Le grand modèle de langage public financé par l'Union européenne
+- Une norme européenne de chiffrement des données d'entraînement
+E: Il classe les usages : interdits, à haut risque (obligations fortes), risque limité (transparence) et risque minimal.
+
+## itil
+
+Q: Dans ITIL, quelle est la différence entre un incident et un problème ?
++ L'incident est une interruption à rétablir ; le problème en est la cause racine
+- Le problème est une interruption à rétablir ; l'incident en est la cause racine
+- L'incident concerne le matériel ; le problème concerne le logiciel
+- Aucune : ITIL utilise les deux mots comme de simples synonymes
+E: Gestion des incidents = rétablir le service au plus vite. Gestion des problèmes = trouver et éliminer la cause pour que ça ne se reproduise pas.
+
+Q: Qu'est-ce qu'une demande de service (service request) dans ITIL ?
++ Une demande standard qui n'est pas une panne (compte, accès, logiciel)
+- Une panne majeure qui touche tous les utilisateurs d'un service
+- Un changement d'infrastructure validé par le comité des changements
+- Une réclamation d'un utilisateur mécontent du service informatique
+E: Elle suit souvent un catalogue de services avec un processus prédéfini et des validations.
+
+Q: Comment détermine-t-on la priorité d'un ticket ?
++ En croisant l'impact (qui est touché) et l'urgence (à quelle vitesse)
+- Selon l'ordre d'arrivée des tickets, sans exception possible
+- Selon le poste hiérarchique de la personne qui a appelé
+- Selon le temps de résolution estimé par le technicien
+E: Une matrice impact × urgence donne P1 à P4. Un serveur de paie en panne la veille de la paie = impact élevé, urgence élevée.
+
+Q: Qu'est-ce qu'un changement standard dans ITIL ?
++ Un changement courant, à faible risque et pré-approuvé
+- Un changement d'urgence fait la nuit sans approbation
+- Un changement qui doit passer devant la direction
+- Un changement interdit pendant les heures ouvrées
+E: Normal = évalué et approuvé (CAB) ; urgent = accéléré pour corriger un incident grave ; standard = pré-approuvé.
+
+Q: Qu'est-ce qu'une CMDB ?
++ Une base des éléments de configuration et de leurs relations
+- Un logiciel qui supervise les serveurs et envoie des alertes
+- Une base chiffrée qui stocke les mots de passe des serveurs
+- Un outil de sauvegarde des fichiers de configuration
+E: Elle aide à évaluer l'impact d'un changement ou d'une panne (quels services dépendent de ce serveur ?).
+
+Q: Qu'est-ce qu'une « base de connaissances » dans un service support ?
++ Un ensemble d'articles décrivant solutions et procédures connues
+- L'annuaire des employés avec leurs postes et leurs numéros
+- Une formation obligatoire pour les nouveaux techniciens
+- Une sauvegarde de tous les tickets fermés depuis un an
+E: Un bon article : symptôme, cause, résolution étape par étape. Il fait gagner du temps au N1 et permet l'autonomie des utilisateurs.
+
+Q: Qu'est-ce qu'un « post-mortem » sans reproche (blameless) ?
++ Une analyse après incident qui cherche les causes, pas un coupable
+- Une sanction décidée après une erreur grave en production
+- Un rapport envoyé uniquement à la direction, sans l'équipe
+- La suppression des logs une fois l'incident résolu
+E: Contenu typique : chronologie, impact, causes, ce qui a bien marché, actions correctives avec un responsable et une date.
+
+Q: Qu'est-ce qu'un PRA et un PCA ?
++ PRA : reprendre l'activité après un sinistre ; PCA : la continuer pendant la crise
+- PCA : reprendre l'activité après un sinistre ; PRA : la continuer pendant la crise
+- PRA : plan de remplacement des postes ; PCA : plan de contrôle des accès
+- PRA : sauvegarde complète ; PCA : sauvegarde incrémentale quotidienne
+E: Le PCA vise à ne pas s'arrêter (redondance, site de secours actif) ; le PRA organise le redémarrage. Les deux doivent être testés.

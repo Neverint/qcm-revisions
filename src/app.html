@@ -1,0 +1,499 @@
+<title>Révisions Admin SecOps</title>
+<style>
+/* Layout : une seule colonne d'appli mobile (max 640px), barre du haut collante, gros boutons tactiles. */
+:root {
+  --bg: #eef2f5;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --fg: #15202b;
+  --muted: #586777;
+  --line: #d4dce4;
+  --accent: #0e6a70;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcefef;
+  --ok: #1d7a43;
+  --ok-soft: #e1f3e8;
+  --bad: #b3261e;
+  --bad-soft: #fbe4e2;
+  --warn: #8a5a00;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1419; --surface: #162029; --surface-2: #1c2833; --fg: #e4ebf1; --muted: #93a3b3;
+    --line: #2a3946; --accent: #45b7bc; --accent-ink: #062326; --accent-soft: #163b40;
+    --ok: #57c785; --ok-soft: #123423; --bad: #ff7a6e; --bad-soft: #3d1a17; --warn: #e8b04a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1419; --surface: #162029; --surface-2: #1c2833; --fg: #e4ebf1; --muted: #93a3b3;
+  --line: #2a3946; --accent: #45b7bc; --accent-ink: #062326; --accent-soft: #163b40;
+  --ok: #57c785; --ok-soft: #123423; --bad: #ff7a6e; --bad-soft: #3d1a17; --warn: #e8b04a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 16px/1.5 var(--font-ui); -webkit-text-size-adjust: 100%; }
+.wrap { max-width: 640px; margin: 0 auto; padding-inline: 16px; padding-block: 0 40px; }
+header.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+}
+.bar-in { max-width: 640px; margin: 0 auto; padding-inline: 16px; padding-block: 10px; display: flex; align-items: center; gap: 12px; }
+.brand { font-weight: 700; font-size: 1rem; letter-spacing: .01em; flex: 1; min-width: 0; }
+.brand small { display: block; font: 500 .72rem/1.2 var(--font-mono); color: var(--muted); letter-spacing: .02em; }
+button { font: inherit; color: inherit; cursor: pointer; }
+.icon-btn { background: transparent; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font-size: .85rem; color: var(--muted); }
+.icon-btn:focus-visible, button:focus-visible, .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.25; margin: 0; }
+h2 { font-size: 1.15rem; }
+.sec { display: grid; gap: 12px; margin-top: 20px; }
+.label { font: 600 .72rem/1 var(--font-ui); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; min-width: 0; }
+.kpi b { display: block; font: 700 1.35rem/1.1 var(--font-ui); font-variant-numeric: tabular-nums; }
+.kpi span { font-size: .78rem; color: var(--muted); }
+.meter { height: 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 7px 12px;
+  font-size: .86rem; line-height: 1.2; display: inline-flex; gap: 6px; align-items: center;
+}
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); }
+.chip .n { font: 500 .72rem var(--font-mono); color: var(--muted); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: transparent; padding: 8px 14px; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.modes { display: grid; gap: 10px; }
+.mode {
+  text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px; display: grid; gap: 2px;
+}
+.mode strong { font-size: 1rem; }
+.mode span { font-size: .85rem; color: var(--muted); }
+.mode.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.mode.primary span { color: var(--accent-ink); opacity: .85; }
+.mode:disabled { opacity: .45; cursor: not-allowed; }
+.linkish { background: none; border: 0; color: var(--accent); padding: 4px 0; font-size: .9rem; text-decoration: underline; text-underline-offset: 3px; }
+/* Quiz */
+.qhead { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-top: 16px; }
+.qmeta { font: 500 .78rem/1.3 var(--font-mono); color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.timer { font: 600 .9rem var(--font-mono); font-variant-numeric: tabular-nums; color: var(--fg); }
+.timer.low { color: var(--bad); }
+.progress { margin-top: 8px; }
+.qtext { font-size: 1.1rem; font-weight: 600; line-height: 1.45; margin-top: 16px; overflow-wrap: anywhere; }
+.qtext pre, .exp pre { white-space: pre-wrap; }
+code, pre { font-family: var(--font-mono); font-size: .88em; }
+code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: 0 4px; overflow-wrap: anywhere; }
+pre { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 8px 0 0; overflow-x: auto; font-weight: 500; }
+pre code { border: 0; padding: 0; background: none; }
+.opts { display: grid; gap: 10px; margin-top: 16px; }
+.opt {
+  text-align: left; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius);
+  padding: 13px 14px; display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; min-height: 52px;
+}
+.opt .k { font: 700 .82rem/1.6 var(--font-mono); color: var(--muted); }
+.opt .t { min-width: 0; overflow-wrap: anywhere; }
+.opt.picked { border-color: var(--accent); background: var(--accent-soft); }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
+.opt.right .k, .opt.wrong .k { color: var(--fg); }
+.opt[disabled] { cursor: default; }
+.feedback { margin-top: 14px; border-radius: var(--radius); padding: 14px; border: 1px solid var(--line); background: var(--surface); }
+.feedback .verdict { font-weight: 700; }
+.feedback.ok .verdict { color: var(--ok); }
+.feedback.bad .verdict { color: var(--bad); }
+.exp { margin-top: 6px; overflow-wrap: anywhere; }
+.actions { display: flex; gap: 10px; margin-top: 16px; }
+.btn { flex: 1; border-radius: var(--radius); padding: 14px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.ghost { flex: 0 0 auto; color: var(--muted); font-weight: 500; }
+/* Résultats et stats */
+.score { display: flex; align-items: baseline; gap: 10px; }
+.score b { font: 800 2.4rem/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+.score span { color: var(--muted); }
+.catrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.catrow:last-child { border-bottom: 0; }
+.catrow .nm { min-width: 0; font-size: .92rem; }
+.catrow .pc { font: 600 .85rem var(--font-mono); font-variant-numeric: tabular-nums; }
+.catrow .meter { grid-column: 1 / -1; }
+.pc.lo { color: var(--bad); } .pc.mid { color: var(--warn); } .pc.hi { color: var(--ok); }
+.miss { display: grid; gap: 10px; }
+.miss .panel { padding: 12px 14px; }
+.miss .q { font-weight: 600; }
+.miss .a { margin-top: 6px; color: var(--ok); }
+.miss .e { margin-top: 4px; color: var(--muted); font-size: .92rem; }
+.note { font-size: .85rem; color: var(--muted); }
+.confirm { display: grid; gap: 10px; }
+.danger { color: var(--bad); border-color: var(--bad); }
+.foot { margin-top: 28px; font: .75rem/1.5 var(--font-mono); color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) {
+  .opt, .chip, .mode, .btn { transition: background-color .15s, border-color .15s; }
+  .meter i { transition: width .3s ease; }
+}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">Révisions Admin SecOps<small id="subtitle">QCM hors ligne</small></div>
+    <button class="icon-btn" id="btnHome" type="button" hidden>Accueil</button>
+    <button class="icon-btn" id="btnStats" type="button">Progrès</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ACCUEIL -->
+  <section id="vHome">
+    <div class="sec">
+      <div class="kpis">
+        <div class="kpi"><b id="kTotal">0</b><span>questions</span></div>
+        <div class="kpi"><b id="kSeen">0</b><span>déjà vues</span></div>
+        <div class="kpi"><b id="kMaster">0</b><span>maîtrisées</span></div>
+      </div>
+      <div class="meter" aria-label="Part maîtrisée"><i id="mMaster"></i></div>
+    </div>
+
+    <div class="sec">
+      <div class="row" style="justify-content:space-between">
+        <span class="label">Thèmes</span>
+        <span class="row">
+          <button class="linkish" id="catAll" type="button">Tout</button>
+          <button class="linkish" id="catNone" type="button">Aucun</button>
+        </span>
+      </div>
+      <div class="chips" id="cats"></div>
+    </div>
+
+    <div class="sec">
+      <span class="label">Questions par série</span>
+      <div class="seg" id="lens" role="group" aria-label="Nombre de questions">
+        <button type="button" data-n="10">10</button>
+        <button type="button" data-n="20">20</button>
+        <button type="button" data-n="40">40</button>
+        <button type="button" data-n="0">Toutes</button>
+      </div>
+    </div>
+
+    <div class="sec">
+      <span class="label">Mode</span>
+      <div class="modes">
+        <button class="mode primary" id="mTrain" type="button"><strong>Entraînement</strong><span>Explication après chaque réponse. Les questions mal sues reviennent plus souvent.</span></button>
+        <button class="mode" id="mNew" type="button"><strong>Jamais vues</strong><span id="mNewSub">Seulement les questions que tu n'as pas encore faites.</span></button>
+        <button class="mode" id="mErr" type="button"><strong>Mes erreurs</strong><span id="mErrSub">Les questions ratées, jusqu'à les réussir plusieurs fois.</span></button>
+        <button class="mode" id="mExam" type="button"><strong>Examen blanc</strong><span>40 questions, 45 minutes, correction à la fin.</span></button>
+      </div>
+    </div>
+    <p class="foot" id="foot"></p>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="vQuiz" hidden>
+    <div class="qhead">
+      <span class="qmeta" id="qMeta"></span>
+      <span class="timer" id="qTimer" hidden></span>
+    </div>
+    <div class="meter progress"><i id="qBar"></i></div>
+    <div class="qtext" id="qText"></div>
+    <div class="opts" id="qOpts"></div>
+    <div class="feedback" id="qFb" hidden>
+      <div class="verdict" id="qVerdict"></div>
+      <div class="exp" id="qExp"></div>
+    </div>
+    <div class="actions">
+      <button class="btn ghost" id="qQuit" type="button">Arrêter</button>
+      <button class="btn primary" id="qNext" type="button" hidden>Suivante</button>
+    </div>
+  </section>
+
+  <!-- RÉSULTATS -->
+  <section id="vResult" hidden>
+    <div class="sec">
+      <span class="label" id="rMode"></span>
+      <div class="score"><b id="rScore"></b><span id="rDetail"></span></div>
+      <div class="panel" id="rCats"></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="rHome" type="button">Accueil</button>
+      <button class="btn primary" id="rAgain" type="button">Revoir les ratées</button>
+    </div>
+    <div class="sec" id="rMissWrap">
+      <span class="label">À retenir</span>
+      <div class="miss" id="rMiss"></div>
+    </div>
+  </section>
+
+  <!-- PROGRÈS -->
+  <section id="vStats" hidden>
+    <div class="sec">
+      <h2>Progrès par thème</h2>
+      <p class="note">« Maîtrisée » = réussie au moins 3 fois de suite. Une erreur remet la question à zéro.</p>
+      <div class="panel" id="sCats"></div>
+    </div>
+    <div class="sec">
+      <span class="label">Réinitialiser</span>
+      <div class="confirm">
+        <button class="btn danger" id="sReset" type="button">Effacer ma progression</button>
+        <div class="row" id="sConfirm" hidden>
+          <span class="note">Tout effacer sur ce téléphone ?</span>
+          <button class="btn danger" id="sYes" type="button">Oui, effacer</button>
+          <button class="btn" id="sNo" type="button">Annuler</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+/*__DATA__*/
+</script>
+<script>
+(function () {
+  "use strict";
+  var DATA = window.QCM_DATA;
+  var CATS = DATA.cats;            // [{id, name}]
+  var QS = DATA.questions;         // [{id, c, q, a:[correct,...], e, f?}]
+  var CAT_BY_ID = {};
+  CATS.forEach(function (c) { CAT_BY_ID[c.id] = c; });
+
+  var KEY = "rq.state.v1";
+  var state = load();
+  function load() {
+    var base = { stats: {}, cats: null, len: 20 };
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var s = JSON.parse(raw); return Object.assign(base, s); }
+    } catch (e) {}
+    return base;
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var views = ["vHome", "vQuiz", "vResult", "vStats"];
+  function show(v) {
+    views.forEach(function (x) { $(x).hidden = x !== v; });
+    $("btnHome").hidden = v === "vHome";
+    $("btnStats").hidden = v === "vStats" || v === "vQuiz";
+    window.scrollTo(0, 0);
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  // `code` en ligne, ```bloc``` et retours à la ligne
+  function fmt(s) {
+    var out = "", parts = String(s).split("```");
+    parts.forEach(function (p, i) {
+      if (i % 2 === 1) { out += "<pre><code>" + esc(p.replace(/^\n/, "")) + "</code></pre>"; return; }
+      var t = esc(p).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      out += t.replace(/\n/g, "<br>");
+    });
+    return out;
+  }
+  function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  function stat(id) { return state.stats[id]; }
+  function isMastered(id) { var s = stat(id); return !!s && s.b >= 3; }
+  function isError(id) { var s = stat(id); return !!s && s.b < 2 && s.s > s.k; }
+
+  // ---------- Accueil ----------
+  var selCats = new Set(state.cats && state.cats.length ? state.cats : CATS.map(function (c) { return c.id; }));
+  // Thèmes ajoutés dans une nouvelle version : cochés par défaut
+  var known = new Set(state.known || CATS.map(function (c) { return c.id; }));
+  CATS.forEach(function (c) { if (!known.has(c.id)) selCats.add(c.id); });
+  state.known = CATS.map(function (c) { return c.id; });
+  function countIn(catId) { return QS.filter(function (q) { return q.c === catId; }).length; }
+  function renderCats() {
+    var box = $("cats"); box.innerHTML = "";
+    CATS.forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip";
+      b.setAttribute("aria-pressed", selCats.has(c.id) ? "true" : "false");
+      b.innerHTML = esc(c.name) + ' <span class="n">' + countIn(c.id) + "</span>";
+      b.onclick = function () { if (selCats.has(c.id)) selCats.delete(c.id); else selCats.add(c.id); persistCats(); renderCats(); renderHome(); };
+      box.appendChild(b);
+    });
+  }
+  function persistCats() { state.cats = Array.from(selCats); save(); }
+  $("catAll").onclick = function () { selCats = new Set(CATS.map(function (c) { return c.id; })); persistCats(); renderCats(); renderHome(); };
+  $("catNone").onclick = function () { selCats = new Set(); persistCats(); renderCats(); renderHome(); };
+  Array.prototype.forEach.call($("lens").children, function (b) {
+    b.onclick = function () { state.len = Number(b.dataset.n); save(); renderLens(); };
+  });
+  function renderLens() { Array.prototype.forEach.call($("lens").children, function (b) { b.setAttribute("aria-pressed", Number(b.dataset.n) === state.len ? "true" : "false"); }); }
+
+  function pool() { return QS.filter(function (q) { return selCats.has(q.c); }); }
+  function renderHome() {
+    var seen = 0, mast = 0;
+    QS.forEach(function (q) { if (stat(q.id)) seen++; if (isMastered(q.id)) mast++; });
+    $("kTotal").textContent = QS.length; $("kSeen").textContent = seen; $("kMaster").textContent = mast;
+    $("mMaster").style.width = (QS.length ? Math.round(mast / QS.length * 100) : 0) + "%";
+    var p = pool();
+    var nNew = p.filter(function (q) { return !stat(q.id); }).length;
+    var nErr = p.filter(function (q) { return isError(q.id); }).length;
+    $("mNewSub").textContent = nNew + " question" + (nNew > 1 ? "s" : "") + " jamais vue" + (nNew > 1 ? "s" : "") + " dans les thèmes choisis.";
+    $("mErrSub").textContent = nErr ? nErr + " question" + (nErr > 1 ? "s" : "") + " à retravailler dans les thèmes choisis." : "Aucune erreur à revoir pour l'instant dans ces thèmes.";
+    $("mTrain").disabled = p.length === 0; $("mExam").disabled = p.length === 0;
+    $("mNew").disabled = nNew === 0; $("mErr").disabled = nErr === 0;
+    $("foot").textContent = "v" + DATA.version + " · " + QS.length + " questions · " + CATS.length + " thèmes · progression enregistrée sur cet appareil";
+    $("subtitle").textContent = p.length + " questions sélectionnées";
+  }
+
+  // ---------- Sélection ----------
+  var BOX_W = [5, 3, 2, 1, 0.5, 0.25];
+  function weightedPick(list, n) {
+    var items = list.map(function (q) { var s = stat(q.id); var w = s ? BOX_W[Math.min(s.b, 5)] : 4; return { q: q, k: Math.pow(Math.random(), 1 / w) }; });
+    items.sort(function (a, b) { return b.k - a.k; });
+    return items.slice(0, n).map(function (x) { return x.q; });
+  }
+  function start(mode) {
+    var p = pool(), n = state.len || p.length, list;
+    if (mode === "exam") { n = Math.min(40, p.length); list = shuffle(p).slice(0, n); }
+    else if (mode === "new") { list = shuffle(p.filter(function (q) { return !stat(q.id); })).slice(0, state.len || undefined); }
+    else if (mode === "err") { list = shuffle(p.filter(function (q) { return isError(q.id); })).slice(0, state.len || undefined); }
+    else if (mode === "retry") { list = shuffle(run.missed.slice()); }
+    else { list = weightedPick(p, Math.min(n, p.length)); }
+    if (!list.length) return;
+    run = { mode: mode, list: list, i: 0, good: 0, answers: [], missed: [], deadline: mode === "exam" ? Date.now() + 45 * 60 * 1000 : 0 };
+    show("vQuiz"); tickTimer(); renderQ();
+  }
+  var run = null, timerId = null;
+
+  // ---------- Question ----------
+  function renderQ() {
+    var q = run.list[run.i];
+    var cat = CAT_BY_ID[q.c];
+    $("qMeta").textContent = (run.i + 1) + " / " + run.list.length + " · " + cat.name;
+    $("qBar").style.width = Math.round(run.i / run.list.length * 100) + "%";
+    $("qText").innerHTML = fmt(q.q);
+    var order = q.a.map(function (_, i) { return i; });
+    if (!q.f) order = shuffle(order);
+    var box = $("qOpts"); box.innerHTML = "";
+    order.forEach(function (idx, pos) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "opt"; b.dataset.idx = idx;
+      b.innerHTML = '<span class="k">' + "ABCDEF"[pos] + '</span><span class="t">' + fmt(q.a[idx]) + "</span>";
+      b.onclick = function () { answer(idx); };
+      box.appendChild(b);
+    });
+    $("qFb").hidden = true; $("qNext").hidden = true;
+  }
+  function answer(idx) {
+    var q = run.list[run.i];
+    if (run.answers[run.i] !== undefined) return;
+    var ok = idx === 0;
+    run.answers[run.i] = idx;
+    var s = state.stats[q.id] || { s: 0, k: 0, b: 0 };
+    s.s++; if (ok) { s.k++; s.b = Math.min(5, s.b + 1); } else { s.b = 0; }
+    s.t = Date.now(); state.stats[q.id] = s; save();
+    if (ok) run.good++; else run.missed.push(q);
+    var btns = $("qOpts").children;
+    Array.prototype.forEach.call(btns, function (b) {
+      b.disabled = true;
+      var i = Number(b.dataset.idx);
+      if (run.mode === "exam") { if (i === idx) b.classList.add("picked"); }
+      else { if (i === 0) b.classList.add("right"); else if (i === idx) b.classList.add("wrong"); }
+    });
+    if (run.mode === "exam") { setTimeout(next, 250); return; }
+    $("qVerdict").textContent = ok ? "Bonne réponse." : "Pas tout à fait.";
+    $("qFb").className = "feedback " + (ok ? "ok" : "bad");
+    $("qExp").innerHTML = (ok ? "" : "Réponse : " + fmt(q.a[0]) + "<br>") + fmt(q.e);
+    $("qFb").hidden = false; $("qNext").hidden = false;
+    $("qNext").textContent = run.i + 1 < run.list.length ? "Suivante" : "Voir le résultat";
+    $("qNext").focus({ preventScroll: true });
+    $("qFb").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+  function next() { run.i++; if (run.i >= run.list.length) finish(); else { renderQ(); window.scrollTo(0, 0); } }
+  $("qNext").onclick = next;
+  $("qQuit").onclick = function () { if (run && run.answers.length) finish(true); else { stopTimer(); show("vHome"); renderHome(); } };
+
+  function tickTimer() {
+    stopTimer();
+    if (!run.deadline) { $("qTimer").hidden = true; return; }
+    $("qTimer").hidden = false;
+    var f = function () {
+      var left = Math.max(0, run.deadline - Date.now());
+      var m = Math.floor(left / 60000), sec = Math.floor(left % 60000 / 1000);
+      $("qTimer").textContent = m + ":" + (sec < 10 ? "0" : "") + sec;
+      $("qTimer").classList.toggle("low", left < 5 * 60000);
+      if (left === 0) finish(true);
+    };
+    f(); timerId = setInterval(f, 1000);
+  }
+  function stopTimer() { if (timerId) clearInterval(timerId); timerId = null; }
+
+  // ---------- Résultat ----------
+  var LABEL = { train: "Entraînement", "new": "Jamais vues", err: "Mes erreurs", exam: "Examen blanc", retry: "Revoir les ratées" };
+  function finish(early) {
+    stopTimer();
+    var done = run.answers.filter(function (x) { return x !== undefined; }).length;
+    var total = run.mode === "exam" ? run.list.length : done;
+    if (run.mode === "exam") {
+      run.list.forEach(function (q, i) { if (run.answers[i] === undefined) run.missed.push(q); });
+    }
+    var pct = total ? Math.round(run.good / total * 100) : 0;
+    $("rMode").textContent = LABEL[run.mode] + (early ? " · arrêté avant la fin" : "");
+    $("rScore").textContent = pct + " %";
+    $("rDetail").textContent = run.good + " bonne" + (run.good > 1 ? "s" : "") + " sur " + total;
+    // par thème
+    var per = {};
+    run.list.forEach(function (q, i) {
+      if (run.mode !== "exam" && run.answers[i] === undefined) return;
+      var p = per[q.c] || (per[q.c] = { ok: 0, n: 0 }); p.n++; if (run.answers[i] === 0) p.ok++;
+    });
+    $("rCats").innerHTML = Object.keys(per).sort(function (a, b) { return per[a].ok / per[a].n - per[b].ok / per[b].n; }).map(function (c) {
+      return catRow(CAT_BY_ID[c].name, per[c].ok, per[c].n, per[c].ok + " / " + per[c].n);
+    }).join("") || '<p class="note">Aucune réponse.</p>';
+    // ratées
+    $("rMissWrap").hidden = run.missed.length === 0;
+    $("rAgain").hidden = run.missed.length === 0;
+    $("rMiss").innerHTML = run.missed.map(function (q) {
+      return '<div class="panel"><div class="q">' + fmt(q.q) + '</div><div class="a">✓ ' + fmt(q.a[0]) + '</div><div class="e">' + fmt(q.e) + "</div></div>";
+    }).join("");
+    show("vResult");
+  }
+  function catRow(name, ok, n, txt) {
+    var p = n ? Math.round(ok / n * 100) : 0;
+    var cls = p < 50 ? "lo" : p < 80 ? "mid" : "hi";
+    return '<div class="catrow"><span class="nm">' + esc(name) + '</span><span class="pc ' + cls + '">' + txt + '</span><div class="meter"><i style="width:' + p + '%"></i></div></div>';
+  }
+  $("rHome").onclick = function () { show("vHome"); renderHome(); };
+  $("rAgain").onclick = function () { start("retry"); };
+
+  // ---------- Progrès ----------
+  function renderStats() {
+    $("sCats").innerHTML = CATS.map(function (c) {
+      var qs = QS.filter(function (q) { return q.c === c.id; });
+      var m = qs.filter(function (q) { return isMastered(q.id); }).length;
+      var seen = qs.filter(function (q) { return stat(q.id); }).length;
+      return catRow(c.name, m, qs.length, m + " / " + qs.length + (seen ? "" : " · jamais vu"));
+    }).join("");
+    $("sConfirm").hidden = true; $("sReset").hidden = false;
+  }
+  $("btnStats").onclick = function () { renderStats(); show("vStats"); };
+  $("btnHome").onclick = function () { if (run && !$("vQuiz").hidden && run.answers.length) { finish(true); return; } stopTimer(); show("vHome"); renderHome(); };
+  $("sReset").onclick = function () { $("sReset").hidden = true; $("sConfirm").hidden = false; };
+  $("sNo").onclick = function () { $("sReset").hidden = false; $("sConfirm").hidden = true; };
+  $("sYes").onclick = function () { state.stats = {}; save(); renderStats(); renderHome(); };
+
+  $("mTrain").onclick = function () { start("train"); };
+  $("mNew").onclick = function () { start("new"); };
+  $("mErr").onclick = function () { start("err"); };
+  $("mExam").onclick = function () { start("exam"); };
+
+  // Clavier : 1-4 / A-D pour répondre, Entrée pour continuer
+  document.addEventListener("keydown", function (ev) {
+    if ($("vQuiz").hidden) return;
+    var k = ev.key.toLowerCase(), pos = "1234".indexOf(k); if (pos < 0) pos = "abcd".indexOf(k);
+    var btns = $("qOpts").children;
+    if (pos >= 0 && btns[pos] && !btns[pos].disabled) { btns[pos].click(); ev.preventDefault(); }
+    else if (k === "enter" && !$("qNext").hidden) { next(); ev.preventDefault(); }
+  });
+
+  renderCats(); renderLens(); renderHome();
+  /*__SW__*/
+})();
+</script>

@@ -1,0 +1,523 @@
+## sec
+
+Q: Que désigne la triade CIA (DIC en français) ?
++ Confidentialité, Intégrité, Disponibilité
+- Contrôle, Identification, Audit
+- Chiffrement, Isolation, Authentification
+- Conformité, Intégrité, Assurance
+E: Confidentialité = seuls les ayants droit voient ; Intégrité = pas de modification non autorisée ; Disponibilité = le service est accessible quand on en a besoin. On ajoute souvent la Traçabilité (DICT).
+
+Q: Une attaque DDoS vise surtout quel pilier de la sécurité ?
++ La disponibilité
+- La confidentialité
+- L'intégrité
+- La non-répudiation
+E: Le but est de saturer le service pour qu'il ne réponde plus. Une fuite de données touche la confidentialité ; une modification de données, l'intégrité.
+
+Q: Qu'est-ce que le principe du moindre privilège ?
++ Donner à chaque compte seulement les droits nécessaires à sa tâche
+- Donner les droits administrateur aux seuls techniciens du support
+- Retirer tous les droits aux utilisateurs, sauf la lecture de leurs mails
+- Partager un seul compte administrateur pour limiter le nombre de comptes
+E: Limite les dégâts d'un compte compromis ou d'une erreur. Exemple : un compte de service de sauvegarde n'a pas besoin d'être admin du domaine.
+
+Q: Qu'est-ce que la défense en profondeur ?
++ Empiler des protections indépendantes pour qu'une faille seule ne suffise pas
+- Concentrer tout le budget sur un seul pare-feu, le plus puissant possible
+- Placer les serveurs dans une salle souterraine, protégée physiquement
+- Chiffrer tous les disques, ce qui rend les autres protections inutiles
+E: Exemple : pare-feu + segmentation + MFA + EDR + sauvegardes + supervision. Chaque couche rattrape les échecs des autres.
+
+Q: Quelle est la différence entre authentification et autorisation ?
++ L'authentification vérifie qui tu es ; l'autorisation décide ce que tu as le droit de faire
+- L'autorisation vérifie qui tu es ; l'authentification ce que tu peux faire
+- Ce sont deux synonymes
+- L'authentification concerne les machines, l'autorisation les humains
+E: On parle d'AAA : Authentication, Authorization, Accounting (traçabilité).
+
+Q: Quels sont les trois types de facteurs d'authentification ?
++ Ce que je sais, ce que je possède, ce que je suis
+- Mot de passe, code PIN, question secrète
+- Login, mot de passe, captcha
+- Badge, carte, clé USB
+E: Le MFA combine au moins deux types différents. Mot de passe + code PIN = deux fois « ce que je sais » : ce n'est pas du vrai MFA.
+
+Q: Quelle méthode MFA résiste le mieux au phishing ?
++ Une clé de sécurité FIDO2 / passkey
+- Un code reçu par SMS
+- Une notification push à accepter
+- Une question secrète
+E: FIDO2 lie la preuve au vrai nom de domaine : une fausse page ne peut pas la réutiliser. Le SMS peut être intercepté (SIM swapping) et le push subit la « MFA fatigue ».
+
+Q: Qu'est-ce que l'hameçonnage (phishing) ?
++ Un message trompeur qui pousse à donner ses identifiants ou ouvrir un fichier piégé
+- Une attaque qui sature un serveur web en envoyant des millions de requêtes
+- Un virus qui se recopie tout seul sur les clés USB branchées au poste
+- Une écoute du réseau Wi-Fi pour capturer les mots de passe qui y circulent
+E: Le spear phishing vise une personne précise avec des informations réelles ; le « whaling » vise les dirigeants.
+
+Q: Qu'est-ce qu'un rançongiciel (ransomware) ?
++ Un malware qui chiffre les données et exige une rançon
+- Un malware qui affiche des publicités sur le poste
+- Un malware qui mine de la cryptomonnaie en cachette
+- Un malware qui enregistre les touches du clavier
+E: Les groupes modernes volent aussi les données avant de chiffrer (double extorsion). Meilleure parade : des sauvegardes hors ligne testées, plus la détection précoce.
+
+Q: Que signifie la règle de sauvegarde 3-2-1 ?
++ 3 copies des données, sur 2 supports différents, dont 1 hors site
+- 3 sauvegardes par jour, 2 par semaine, 1 par mois
+- 3 serveurs, 2 disques, 1 bande
+- 3 administrateurs, 2 mots de passe, 1 coffre
+E: Version moderne : 3-2-1-1-0 : une copie immuable ou hors ligne, et 0 erreur à la restauration testée.
+
+Q: Que sont le RPO et le RTO ?
++ RPO = perte de données maximale tolérée ; RTO = durée d'arrêt maximale tolérée
+- RPO = durée d'arrêt maximale tolérée ; RTO = perte de données maximale tolérée
+- RPO = sauvegarde complète hebdomadaire ; RTO = sauvegarde incrémentale du jour
+- RPO = plan de reprise après sinistre ; RTO = plan de continuité d'activité
+E: RPO de 1 h → sauvegarder au moins toutes les heures. RTO de 4 h → il faut pouvoir restaurer en moins de 4 h.
+
+Q: Qu'est-ce qu'une vulnérabilité « zero-day » ?
++ Une faille exploitée avant qu'un correctif existe
+- Une faille découverte le premier jour du mois
+- Une faille corrigée le jour même de sa découverte
+- Un virus qui s'efface tout seul au bout d'un jour
+E: Les défenses comportementales (EDR, segmentation, moindre privilège) limitent les dégâts quand aucun patch n'existe.
+
+Q: Qu'est-ce qu'un identifiant CVE ?
++ Un identifiant public unique pour une vulnérabilité connue
+- Un certificat qui prouve qu'un logiciel a été audité
+- Un score de gravité allant de 0 à 10 pour une faille
+- Un type de pare-feu dédié aux vulnérabilités web
+E: Exemple : CVE-2021-44228 (Log4Shell). Le score de gravité, c'est le CVSS (de 0 à 10).
+
+Q: À quoi sert le score CVSS ?
++ Évaluer la gravité technique d'une vulnérabilité, de 0 à 10
+- Identifier de façon unique l'éditeur du logiciel vulnérable
+- Mesurer la vitesse de détection d'un antivirus, de 0 à 10
+- Classer la solidité des mots de passe d'un annuaire
+E: 9.0 à 10 = critique. Pour prioriser, on combine avec l'exposition réelle et l'exploitation active (catalogue CISA KEV, score EPSS).
+
+Q: Qu'est-ce que l'ingénierie sociale ?
++ Manipuler une personne pour obtenir une information ou un accès
+- Concevoir le réseau social interne d'une entreprise
+- Programmer des robots qui répondent aux clients en ligne
+- Organiser les équipes informatiques par compétences
+E: Faux support technique au téléphone, faux livreur, faux mail du PDG (« fraude au président »). La parade : procédures de vérification et sensibilisation.
+
+Q: Un appelant se présente comme le DSI et demande de réinitialiser son MFA en urgence. Bonne réaction ?
++ Vérifier son identité par un canal connu (rappel au numéro officiel) avant d'agir
+- Le faire tout de suite : son poste justifie l'urgence et engage sa responsabilité
+- Lui demander son mot de passe actuel pour être sûr que c'est bien lui
+- Désactiver le MFA de tout son service, le temps qu'il règle son problème
+E: L'urgence et l'autorité sont les deux leviers classiques de l'ingénierie sociale. La procédure s'applique à tout le monde.
+
+Q: Qu'est-ce qu'une attaque par force brute ?
++ Essayer de très nombreux mots de passe jusqu'à trouver le bon
+- Casser physiquement un serveur
+- Envoyer des millions de requêtes pour saturer un site
+- Voler un ordinateur portable
+E: Le « password spraying » teste un mot de passe courant sur beaucoup de comptes, pour éviter les verrouillages. Parades : MFA, verrouillage, fail2ban.
+
+Q: Qu'est-ce qu'une injection SQL ?
++ Insérer du SQL dans un champ de saisie pour que la base l'exécute
+- Chiffrer une base de données avec une clé stockée dans une table
+- Copier une base de données vers un autre serveur pendant la nuit
+- Saturer une base de données en ouvrant trop de connexions à la fois
+E: Parade principale : les requêtes préparées (paramétrées). Fait partie du classement OWASP Top 10 (catégorie « Injection »).
+
+Q: Qu'est-ce que l'OWASP Top 10 ?
++ La liste des 10 catégories de risques majeurs des applications web
+- Le classement annuel des 10 meilleurs antivirus du marché
+- La liste des 10 ports à fermer en priorité sur un serveur
+- Le classement des 10 pare-feux les plus vendus en entreprise
+E: Exemples : contrôle d'accès défaillant, défauts cryptographiques, injection, mauvaise configuration de sécurité.
+
+Q: Qu'est-ce qu'une attaque XSS ?
++ Injecter un script dans une page pour qu'il s'exécute chez les visiteurs
+- Saturer un serveur web en ouvrant des milliers de connexions lentes
+- Voler le certificat TLS d'un site pour se faire passer pour lui
+- Deviner le mot de passe d'un site en testant tout un dictionnaire
+E: Cross-Site Scripting. Permet de voler des cookies de session. Parades : échapper les sorties, en-tête Content-Security-Policy.
+
+Q: Qu'est-ce qu'une attaque de l'homme du milieu (MITM) ?
++ L'attaquant s'intercale entre deux parties pour lire ou modifier leurs échanges
+- L'attaquant sature le lien entre deux parties pour couper leurs échanges
+- L'attaquant devine la clé privée des deux parties à partir de leurs échanges
+- L'attaquant infecte le BIOS pour démarrer avant le système d'exploitation
+E: Exemples : faux point Wi-Fi, empoisonnement ARP. Le chiffrement avec vérification d'identité (TLS, clés d'hôte SSH) protège.
+
+Q: Qu'est-ce qu'un mouvement latéral ?
++ Le passage d'un attaquant d'une machine compromise vers d'autres machines
+- La migration à chaud d'une VM vers un autre hôte du cluster
+- Le basculement automatique d'un serveur vers son serveur de secours
+- La montée d'un compte utilisateur vers les droits administrateur
+E: Souvent via des identifiants volés (pass-the-hash), RDP, SMB, PsExec. La segmentation et le modèle de tiers AD le limitent.
+
+Q: Que propose le modèle Zero Trust ?
++ Ne faire confiance à aucun accès par défaut, même interne : vérifier à chaque fois
+- Faire confiance à tout le réseau interne et filtrer seulement l'entrée Internet
+- Supprimer les pare-feux, devenus inutiles quand tout passe par le cloud
+- Faire confiance aux seuls appareils fournis par l'entreprise, sans autre contrôle
+E: Vérification de l'identité, de l'état de l'appareil et du contexte à chaque accès, avec moindre privilège et micro-segmentation.
+
+Q: Quel organisme français publie les guides d'hygiène informatique et de durcissement ?
++ L'ANSSI
+- La CNIL
+- L'AFNOR
+- L'ARCEP
+E: L'ANSSI publie le Guide d'hygiène (42 mesures), les recommandations de configuration GNU/Linux, et certifie des produits. La CNIL s'occupe des données personnelles.
+
+Q: Quel texte européen impose de nouvelles obligations de cybersécurité à de nombreuses entreprises (entités essentielles et importantes) ?
++ La directive NIS2
+- Le RGPD
+- La norme ISO 9001
+- Le règlement eIDAS
+E: NIS2 élargit fortement le champ de NIS1. Le RGPD protège les données personnelles ; ISO 9001 concerne la qualité.
+
+Q: Quel délai impose le RGPD pour notifier une violation de données personnelles à l'autorité ?
++ 72 heures, si la violation présente un risque
+- 24 heures, dans tous les cas
+- 30 jours, après la fin de l'enquête interne
+- Aucun délai, seulement un bilan annuel
+E: En France, l'autorité est la CNIL. Si le risque est élevé pour les personnes, il faut aussi les informer.
+
+Q: Quelle norme décrit un système de management de la sécurité de l'information (SMSI) ?
++ ISO/IEC 27001
+- ISO 9001
+- ISO 14001
+- ISO/IEC 20000
+E: 27001 = exigences du SMSI (certifiable), 27002 = catalogue de mesures. ISO 20000 concerne la gestion des services IT.
+
+Q: Que signifie « durcir » (hardening) un système ?
++ Réduire sa surface d'attaque : retirer l'inutile, restreindre, configurer sûr
+- Remplacer ses disques par des modèles plus robustes aux chocs et à la chaleur
+- Augmenter sa RAM pour qu'il résiste mieux aux attaques par saturation
+- L'enfermer dans une baie verrouillée, dans une salle climatisée
+E: Exemples du lab : SSH par clé seulement, root interdit, fail2ban, mises à jour automatiques, audit Lynis. Référentiels : CIS Benchmarks, ANSSI.
+
+Q: Que sont les CIS Benchmarks ?
++ Des guides de configuration sécurisée, par système et logiciel
+- Des tests de performance comparant les serveurs du marché
+- Des certifications professionnelles pour les techniciens
+- Des antivirus gratuits publiés par une association
+E: Publiés par le Center for Internet Security, avec des niveaux (Level 1 = base, Level 2 = renforcé). Les outils d'audit s'en inspirent.
+
+Q: Qu'est-ce qu'un test d'intrusion (pentest) ?
++ Une attaque simulée et autorisée pour trouver les failles
+- L'installation de logiciels de sécurité sur tout le parc
+- Un test de charge pour mesurer la tenue d'un serveur
+- Un audit de conformité des contrats des fournisseurs
+E: Il faut toujours un cadre écrit (périmètre, dates, autorisation). Le « red team » simule un attaquant complet sur la durée.
+
+Q: Qu'est-ce que l'équipe « Blue Team » ?
++ L'équipe de défense qui détecte et répond aux attaques
+- L'équipe qui attaque pour tester les défenses
+- L'équipe du support utilisateurs
+- L'équipe réseau
+E: Red = attaque, Blue = défense, Purple = les deux qui travaillent ensemble pour améliorer la détection.
+
+Q: Qu'est-ce qu'un « shadow IT » ?
++ Des outils utilisés par les employés sans validation de l'IT
+- Un serveur de secours caché dans un autre bâtiment
+- Une équipe informatique externalisée qui travaille de nuit
+- Un réseau parallèle réservé aux tests des administrateurs
+E: Exemple : partage de fichiers sur un compte personnel. Risques : fuite de données, aucune sauvegarde, aucune supervision.
+
+Q: Qu'est-ce qu'un « honeypot » ?
++ Un faux système exposé exprès pour attirer et observer les attaquants
+- Un coffre-fort chiffré qui contient les mots de passe administrateur
+- Une sauvegarde chiffrée cachée sur un serveur hors du réseau
+- Un pare-feu matériel placé devant les serveurs les plus sensibles
+E: Toute connexion à un honeypot est suspecte par nature, ce qui en fait une alerte très fiable.
+
+Q: Quelle est la meilleure pratique pour les mots de passe des comptes administrateurs locaux Windows ?
++ Un mot de passe unique par machine, géré automatiquement (Windows LAPS)
+- Le même mot de passe sur toutes les machines pour simplifier
+- Pas de mot de passe sur un réseau interne
+- Le noter dans un fichier partagé
+E: Avec un mot de passe partout identique, une machine compromise donne accès à toutes (mouvement latéral). LAPS le change et le stocke dans AD ou Entra ID.
+
+Q: Où stocker les mots de passe d'une équipe IT ?
++ Dans un gestionnaire de mots de passe d'équipe (Bitwarden, KeePass…)
+- Dans un fichier Excel protégé, rangé sur le partage réseau de l'équipe
+- Dans un canal de discussion privé, réservé aux membres de l'équipe
+- Dans un fichier texte chiffré en base64, sur le bureau du responsable
+E: Le gestionnaire chiffre, trace les accès et partage par groupe. Pour les secrets des applications : un coffre comme HashiCorp Vault.
+
+Q: Pourquoi ne jamais mettre de mot de passe ou de clé d'API dans un dépôt Git ?
++ L'historique garde le secret même supprimé, et le dépôt peut fuiter
+- Git refuse d'enregistrer les fichiers qui contiennent des mots de passe
+- Les mots de passe ralentissent les opérations de clone et de push
+- Git corrompt les caractères spéciaux contenus dans les mots de passe
+E: Si c'est arrivé : révoquer le secret immédiatement, puis nettoyer l'historique. Des outils comme gitleaks détectent les secrets avant le commit.
+
+## crypto
+
+Q: Quelle est la différence entre chiffrement symétrique et asymétrique ?
++ Symétrique : une seule clé partagée ; asymétrique : une paire publique/privée
+- Symétrique : une paire publique/privée ; asymétrique : une seule clé partagée
+- Symétrique : pour les fichiers ; asymétrique : uniquement pour le Wi-Fi
+- Symétrique : clé de 128 bits ; asymétrique : clé de 256 bits obligatoire
+E: AES est symétrique (rapide, données). RSA et les courbes elliptiques sont asymétriques (échange de clés, signatures). TLS combine les deux.
+
+Q: Quel algorithme est un chiffrement symétrique moderne de référence ?
++ AES
+- RSA
+- SHA-256
+- MD5
+E: AES-128 ou AES-256. RSA est asymétrique ; SHA-256 et MD5 sont des fonctions de hachage, pas du chiffrement.
+
+Q: Qu'est-ce qu'une fonction de hachage ?
++ Une fonction qui produit une empreinte de taille fixe, non réversible
+- Un chiffrement que l'on peut inverser si l'on possède la bonne clé
+- Une compression sans perte qui réduit la taille d'un fichier
+- Un générateur de mots de passe aléatoires de longueur fixe
+E: Sert à vérifier l'intégrité (`sha256sum fichier`) et à stocker les mots de passe (avec un sel et un algorithme lent).
+
+Q: Pourquoi MD5 et SHA-1 sont-ils déconseillés ?
++ On sait fabriquer des collisions (deux contenus, même empreinte)
+- Ils sont trop lents pour vérifier rapidement de gros fichiers
+- Ils produisent des empreintes trop longues pour être stockées
+- Ils ne sont plus disponibles sur les systèmes Linux récents
+E: Préférer SHA-256 ou plus. MD5 peut encore servir à détecter une corruption accidentelle, jamais pour la sécurité.
+
+Q: Quel algorithme faut-il pour stocker des mots de passe ?
++ Un algorithme lent avec sel : Argon2, bcrypt ou scrypt
+- Un hachage rapide sans sel : SHA-256 ou SHA-512
+- Un chiffrement réversible : AES, clé dans le code
+- Un encodage simple : base64 ou hexadécimal
+E: La lenteur rend la force brute coûteuse ; le sel empêche les tables pré-calculées (rainbow tables) et rend identiques les mots de passe différents en base.
+
+Q: À quoi sert un « sel » (salt) en hachage de mots de passe ?
++ Une valeur aléatoire ajoutée à chaque mot de passe avant le hachage
+- Une clé secrète qui permet de déchiffrer les mots de passe stockés
+- Un deuxième mot de passe demandé à l'utilisateur à la connexion
+- Une compression de l'empreinte pour qu'elle prenne moins de place
+E: Le sel n'est pas secret, il est stocké avec l'empreinte. Il rend les tables pré-calculées inutiles.
+
+Q: Comment fonctionne une signature numérique ?
++ On signe avec sa clé privée ; tout le monde vérifie avec la clé publique
+- On signe avec la clé publique ; on vérifie avec la clé privée
+- On signe avec un mot de passe partagé
+- On chiffre le document entier avec AES
+E: Prouve l'origine et l'intégrité (et la non-répudiation). Exemple : les paquets apt sont signés par les clés GPG de la distribution.
+
+Q: Pour envoyer un message confidentiel à Alice avec du chiffrement asymétrique, quelle clé utilise-t-on ?
++ La clé publique d'Alice
+- La clé privée d'Alice
+- Ta propre clé privée
+- Ta propre clé publique
+E: Seule la clé privée d'Alice pourra déchiffrer. (Pour signer, c'est l'inverse : ta propre clé privée.)
+
+Q: Qu'est-ce qu'une autorité de certification (CA) ?
++ Un tiers de confiance qui signe les certificats pour garantir leur propriétaire
+- Un serveur qui chiffre à la volée toutes les données d'un site web
+- Un organisme qui délivre les diplômes des métiers de la cybersécurité
+- Un service qui génère les clés privées des sites et les leur envoie
+E: Le navigateur fait confiance à une liste de CA racines. Let's Encrypt délivre des certificats gratuits et automatisés (ACME).
+
+Q: Quelle version de TLS faut-il au minimum autoriser aujourd'hui ?
++ TLS 1.2
+- SSL 3.0
+- TLS 1.0
+- TLS 1.1
+E: SSL 2/3, TLS 1.0 et 1.1 sont obsolètes et désactivés dans les navigateurs. TLS 1.3 est plus rapide et plus sûr.
+
+Q: Quelle commande affiche le certificat présenté par un site et ses dates de validité ?
++ `openssl s_client -connect site.fr:443 -servername site.fr | openssl x509 -noout -dates`
+- `ssh-keygen -l -f site.fr:443 | openssl x509 -noout -dates -servername site.fr`
+- `dig site.fr CERT +short | openssl x509 -noout -dates -connect site.fr:443`
+- `nc -zv site.fr 443 | openssl s_client -noout -dates -servername site.fr`
+E: `-servername` active le SNI (indispensable quand plusieurs sites partagent une IP). Un certificat expiré est une panne très courante.
+
+Q: Qu'est-ce que le chiffrement de bout en bout ?
++ Seuls l'expéditeur et le destinataire peuvent lire, pas le serveur intermédiaire
+- Les données sont chiffrées entre ton poste et le serveur, qui les lit en clair
+- Le disque du serveur est chiffré, ce qui protège les messages stockés
+- Le câble réseau est blindé, ce qui empêche toute écoute sur le trajet
+E: Exemple : Signal. Avec TLS seul, le serveur voit les données en clair une fois arrivées.
+
+Q: Quel outil chiffre un disque entier sous Linux ?
++ LUKS
+- BitLocker
+- FileVault
+- GPG
+E: BitLocker = Windows, FileVault = macOS. GPG chiffre des fichiers ou des mails, pas un disque entier.
+
+Q: Où BitLocker stocke-t-il de préférence sa clé de déchiffrement au démarrage ?
++ Dans la puce TPM de la machine
+- Sur une clé USB obligatoire
+- Dans un fichier sur le bureau
+- Sur le serveur DNS
+E: La clé de récupération (48 chiffres) doit être sauvegardée ailleurs, par exemple dans AD ou Entra ID, sinon les données sont perdues en cas de souci de TPM.
+
+Q: Qu'est-ce que le « Secure Boot » ?
++ Une fonction UEFI qui ne démarre que des chargeurs et noyaux signés
+- Un mot de passe BIOS demandé à chaque démarrage de la machine
+- Un mode de démarrage minimal, sans pilotes tiers ni réseau
+- Un antivirus intégré à la carte mère, lancé avant le système
+E: Protège contre les bootkits. Les modules noyau non signés (certains pilotes) peuvent alors être refusés.
+
+Q: Quelle est la différence entre encodage (base64) et chiffrement ?
++ L'encodage se décode sans secret ; le chiffrement exige une clé
+- Le chiffrement se décode sans secret ; l'encodage exige une clé
+- Base64 est un chiffrement fort, utilisé notamment par les banques
+- Aucune : base64 est simplement un autre nom du chiffrement AES
+E: Les Secrets Kubernetes sont seulement encodés en base64 : ils ne sont pas protégés sans chiffrement au repos ni contrôle d'accès.
+
+Q: Que garantit HSTS sur un site web ?
++ Le navigateur n'accepte plus que du HTTPS vers ce site pendant une durée donnée
+- Le site garantit que ses serveurs sont hébergés dans l'Union européenne
+- Les mots de passe du site sont hachés avec un algorithme moderne
+- Le site résiste aux attaques par déni de service grâce à un CDN
+E: En-tête `Strict-Transport-Security`. Empêche un attaquant de forcer une connexion en HTTP clair.
+
+## soc
+
+Q: Que fait un SOC ?
++ Il surveille les systèmes en continu, détecte les incidents et coordonne la réponse
+- Il installe les postes de travail, gère le parc et prête le matériel aux salariés
+- Il négocie les contrats avec les fournisseurs de logiciels et de matériel
+- Il développe les applications métier et assure leur maintenance corrective
+E: Security Operations Center. Les analystes N1 trient les alertes, N2/N3 investiguent et répondent.
+
+Q: Qu'est-ce qu'un SIEM ?
++ Un outil qui collecte, normalise et corrèle les logs pour détecter des menaces
+- Un antivirus pour serveurs qui analyse les fichiers et bloque les malwares
+- Un pare-feu applicatif qui filtre les requêtes web envoyées aux serveurs
+- Un gestionnaire de tickets qui suit les demandes adressées au SOC
+E: Exemples : Splunk, Microsoft Sentinel, Elastic, Wazuh, QRadar. Il produit des alertes à partir de règles de corrélation.
+
+Q: Qu'est-ce que Wazuh ?
++ Une plateforme libre de sécurité (XDR/SIEM) avec des agents
+- Un pare-feu matériel libre, concurrent d'OPNsense et de pfSense
+- Un hyperviseur libre basé sur KVM, concurrent de Proxmox VE
+- Un outil libre de sauvegarde dédupliquée, concurrent de Bacula
+E: L'agent envoie les événements au manager qui applique les règles (avec un niveau de gravité de 0 à 15). Le tableau de bord est basé sur OpenSearch.
+
+Q: Qu'est-ce que la surveillance d'intégrité des fichiers (FIM) ?
++ Détecter la création, modification ou suppression de fichiers sensibles
+- Vérifier chaque heure que les disques ne dépassent pas 90 % de remplissage
+- Compresser automatiquement les fichiers qui ne sont plus utilisés
+- Sauvegarder chaque nuit les fichiers modifiés dans la journée
+E: Wazuh (syscheck), AIDE ou Tripwire comparent des empreintes. Une modification de `/etc/sudoers` hors changement planifié doit alerter.
+
+Q: Que désigne un « faux positif » ?
++ Une alerte déclenchée alors qu'il n'y a pas de menace
+- Une vraie attaque qui n'a déclenché aucune alerte
+- Une alerte confirmée par un analyste de niveau 2
+- Une alerte supprimée par erreur avant d'être traitée
+E: Le faux négatif est pire : une vraie attaque passée inaperçue. On ajuste (« tune ») les règles pour réduire les faux positifs sans créer de faux négatifs.
+
+Q: Qu'est-ce que le framework MITRE ATT&CK ?
++ Une base des tactiques et techniques d'attaquants observées dans la réalité
+- Une base des vulnérabilités logicielles, classées par score de gravité
+- Un antivirus open source publié par le gouvernement américain
+- Une norme de chiffrement des échanges entre équipes de sécurité
+E: Exemple : T1110 = Brute Force, T1059 = Command and Scripting Interpreter. Les règles de détection sont souvent étiquetées avec ces IDs.
+
+Q: Quelles sont les phases de la réponse à incident selon le NIST ?
++ Préparation ; détection et analyse ; confinement, éradication, rétablissement ; post-incident
+- Détection ; confinement ; suppression des preuves ; réinstallation complète du système
+- Alerte ; appel au fournisseur ; attente du correctif ; clôture du ticket d'incident
+- Sauvegarde ; restauration ; audit externe ; communication à la presse et aux clients
+E: Le retour d'expérience (post-incident) sert à ne pas revivre le même incident. Le SANS découpe en 6 étapes (PICERL) avec la même logique.
+
+Q: Une machine est infectée par un rançongiciel. Premier réflexe ?
++ L'isoler du réseau sans l'éteindre, puis alerter selon la procédure
+- L'éteindre tout de suite, puis la réinstaller à partir d'une image propre
+- Payer la rançon pour récupérer les données le plus vite possible
+- Supprimer les fichiers chiffrés pour empêcher la propagation
+E: Isoler stoppe la propagation ; garder la machine allumée préserve la mémoire vive pour l'investigation. L'EDR permet souvent l'isolement en un clic.
+
+Q: Qu'est-ce qu'un IOC (indicateur de compromission) ?
++ Une trace technique d'attaque : IP, domaine, empreinte de fichier…
+- Un incident de sécurité clôturé et documenté dans le ticket
+- Un indicateur de performance qui mesure la rapidité du SOC
+- Une certification de sécurité obtenue par un analyste du SOC
+E: On recherche les IOC dans les logs pour savoir si d'autres machines sont touchées. Les IOA (indicateurs d'attaque) décrivent plutôt des comportements.
+
+Q: Qu'est-ce que le « threat hunting » ?
++ La recherche proactive de menaces cachées, sans attendre une alerte
+- L'analyse antivirus complète de tout le parc, lancée chaque nuit
+- Le recrutement d'analystes expérimentés pour renforcer le SOC
+- La destruction sécurisée des vieux disques durs du parc
+E: Le chasseur part d'une hypothèse (« un attaquant utilise PowerShell encodé ») et fouille les données.
+
+Q: Qu'est-ce qu'un SOAR ?
++ Un outil qui automatise les actions de réponse (playbooks) aux alertes
+- Un pare-feu qui bloque automatiquement les IP signalées par les alertes
+- Un format standard pour échanger les logs entre plusieurs SIEM
+- Un antivirus mobile qui protège les téléphones des analystes
+E: Exemple : sur une alerte phishing, extraire les URL, les vérifier, bloquer l'expéditeur et ouvrir un ticket automatiquement.
+
+Q: Qu'est-ce qu'un playbook de réponse à incident ?
++ Une procédure écrite, étape par étape, pour un type d'incident précis
+- Une liste des logiciels de sécurité à installer sur chaque poste
+- Un contrat signé avec un prestataire de réponse à incident
+- Un rapport annuel qui résume les incidents de l'année écoulée
+E: Exemples : compte compromis, phishing, rançongiciel. Il précise qui fait quoi, dans quel ordre, et qui prévenir.
+
+Q: Pourquoi synchroniser l'heure de toutes les machines (NTP) est important pour un SOC ?
++ Sans horloge commune, impossible de reconstituer la chronologie d'une attaque
+- Pour que les sauvegardes nocturnes démarrent toutes exactement à la même heure
+- Pour que les certificats TLS soient renouvelés automatiquement à minuit
+- Ce n'est pas important : le SIEM corrige lui-même l'heure de chaque log
+E: Des logs décalés de quelques minutes rendent la corrélation fausse. Kerberos refuse aussi l'authentification au-delà de 5 minutes d'écart par défaut.
+
+Q: Dans `/var/log/auth.log`, que révèle une série de `Failed password for invalid user admin from 203.0.113.5` ?
++ Une tentative de force brute SSH sur des comptes inexistants
+- Un utilisateur qui a oublié son mot de passe et réessaie
+- Une erreur de disque qui empêche la lecture de /etc/shadow
+- Une mise à jour d'OpenSSH qui a renommé certains comptes
+E: Réponses : fail2ban, désactiver le mot de passe en SSH, restreindre la source au pare-feu. 203.0.113.0/24 est une plage réservée à la documentation.
+
+Q: Quel est le rôle de l'analyste SOC de niveau 1 ?
++ Trier les alertes, écarter les faux positifs et escalader les vrais incidents
+- Écrire et maintenir les règles de filtrage des pare-feux de l'entreprise
+- Développer les intégrations et les outils internes utilisés par le SOC
+- Diriger la cellule de crise et communiquer avec la direction en cas d'attaque
+E: Le N1 suit les procédures, documente dans les tickets et escalade au N2/N3 pour l'investigation approfondie.
+
+Q: Quel identifiant d'événement Windows correspond à une connexion réussie ?
++ 4624
+- 4625
+- 4720
+- 1102
+E: 4625 = échec de connexion, 4720 = création de compte, 4672 = connexion avec privilèges spéciaux, 1102 = journal de sécurité effacé (très suspect).
+
+Q: Quel identifiant d'événement Windows indique que le journal de sécurité a été effacé ?
++ 1102
+- 4624
+- 4688
+- 7045
+E: Effacer les traces est typique d'un attaquant. 4688 = création de processus, 7045 = nouveau service installé (souvent utilisé pour la persistance).
+
+Q: Qu'est-ce que Sysmon ?
++ Un outil Sysinternals qui journalise en détail l'activité de Windows
+- L'antivirus intégré à Windows, qui analyse les fichiers en temps réel
+- Un outil de supervision des performances CPU et mémoire de Windows
+- Le pare-feu de Windows, qui filtre les connexions entrantes et sortantes
+E: Sysmon enrichit énormément ce que voit le SIEM (ligne de commande complète, empreintes, connexions réseau).
+
+Q: Pourquoi envoyer les logs vers un serveur central plutôt que les laisser sur chaque machine ?
++ Un attaquant peut effacer les logs locaux, et la corrélation exige de centraliser
+- Les logs locaux prennent trop de place et finissent toujours par remplir les disques
+- Les logs locaux sont écrits dans un format que seul un SIEM sait déchiffrer
+- La centralisation accélère les machines en leur retirant l'écriture des logs
+E: Outils : rsyslog/syslog-ng vers un collecteur, agents Wazuh ou Elastic, Windows Event Forwarding.
+
+Q: Dans un log Wazuh, le niveau de règle va de 0 à 15. Que signifie un niveau 12 ?
++ Un événement de haute importance, à traiter tout de suite
+- Un événement ignoré, qui n'est jamais enregistré
+- Un message de débogage, utile seulement aux développeurs
+- Une erreur interne de l'agent Wazuh sur la machine
+E: Les niveaux bas (2–4) sont surtout informatifs ; à partir de 12 environ, ce sont des alertes graves (ex. attaque réussie probable).
+
+Q: Que contient une bonne fiche de ticket d'incident ?
++ Chronologie, actifs touchés, actions horodatées, preuves, statut, suite
+- Le nom de l'utilisateur concerné et le mot « résolu », pour aller vite
+- Les mots de passe des comptes touchés, pour que le N2 puisse vérifier
+- Une capture d'écran de l'alerte, sans texte, pour ne rien interpréter
+E: Un ticket bien rédigé permet à un collègue de reprendre sans rien demander et sert au retour d'expérience.
