@@ -1,0 +1,284 @@
+## win
+
+Q: Que sont les FSMO dans Active Directory ?
++ Cinq rôles uniques, chacun tenu par un seul contrôleur de domaine
+- Les cinq groupes d'administrateurs créés par défaut dans le domaine
+- Les fichiers de sauvegarde de la base Active Directory (NTDS.dit)
+- Les protocoles de réplication utilisés entre les sites distants
+E: Schéma, nommage de domaine (forêt) ; RID, PDC émulateur, infrastructure (domaine). Le PDC émulateur sert aussi de référence de temps du domaine.
+
+Q: Quel est le rôle du « Global Catalog » dans AD ?
++ Une copie partielle de tous les objets de la forêt, pour chercher vite
+- Une copie de sauvegarde de tous les contrôleurs de domaine du site
+- La liste des applications installées sur tous les postes du domaine
+- Le registre des licences Microsoft 365 attribuées aux utilisateurs
+E: Il est consulté à l'ouverture de session (appartenance aux groupes universels). En général, chaque site a au moins un DC catalogue global.
+
+Q: Quel outil graphique sert à gérer les utilisateurs et les groupes d'AD ?
++ Utilisateurs et ordinateurs Active Directory (dsa.msc)
+- Gestionnaire de serveur, onglet Rôles (servermanager.exe)
+- Gestion de l'ordinateur, onglet Utilisateurs (compmgmt.msc)
+- Éditeur du registre, ruche des comptes (regedit.exe)
+E: Les GPO se gèrent dans gpmc.msc, le DNS dans dnsmgmt.msc. Le Centre d'administration Active Directory (dsac.exe) est une alternative récente.
+
+Q: Un utilisateur a oublié son mot de passe et son compte est verrouillé. Que faire, en PowerShell ?
++ Vérifier son identité, puis `Unlock-ADAccount` et un reset du mot de passe
+- Supprimer le compte et le recréer avec le même nom et le même mot de passe
+- Lui donner le mot de passe d'un collègue le temps de régler le problème
+- Désactiver la stratégie de verrouillage pour tout le domaine, par sécurité
+E: Puis `Set-ADUser -ChangePasswordAtLogon $true`. La vérification d'identité avant tout reset est la protection contre l'ingénierie sociale.
+
+Q: Qu'est-ce qu'Exchange Online ?
++ Le service de messagerie hébergé de Microsoft 365
+- L'annuaire des utilisateurs de Microsoft 365
+- L'outil de partage de fichiers de Microsoft 365
+- Le pare-feu de Microsoft 365
+E: L'annuaire est Entra ID, les fichiers sont dans OneDrive et SharePoint, Teams sert à la communication.
+
+Q: Quelle différence entre OneDrive et SharePoint ?
++ OneDrive : fichiers personnels ; SharePoint : fichiers d'équipe
+- OneDrive : fichiers d'équipe ; SharePoint : fichiers personnels
+- OneDrive est gratuit et SharePoint payant, sinon c'est identique
+- OneDrive est réservé aux Mac et SharePoint aux postes Windows
+E: Les fichiers d'une équipe Teams sont stockés dans le site SharePoint de l'équipe.
+
+Q: Qu'est-ce que Windows Autopilot ?
++ Il configure tout seul un PC neuf à la 1ʳᵉ connexion, via Intune
+- Il installe automatiquement les mises à jour de Windows la nuit
+- Il remplace l'antivirus Defender sur les postes de l'entreprise
+- Il migre les serveurs physiques vers des machines virtuelles Azure
+E: Le PC livré directement chez l'utilisateur rejoint Entra ID, reçoit ses applications et ses réglages : plus besoin de master.
+
+Q: Qu'est-ce que l'attaque « pass-the-hash » ?
++ Réutiliser un haché NTLM volé pour s'authentifier sans le mot de passe
+- Retrouver un mot de passe en clair à partir de son haché NTLM volé
+- Envoyer des mots de passe par mail pour piéger les utilisateurs
+- Saturer un contrôleur de domaine de demandes d'authentification
+E: Parades : LAPS, modèle de tiers, Credential Guard, limiter NTLM, ne pas se connecter avec un compte admin sur des postes ordinaires.
+
+Q: Qu'est-ce que le Kerberoasting ?
++ Demander des tickets de comptes de service pour casser leur mot de passe
+- Saturer le service Kerberos d'un contrôleur de domaine de requêtes
+- Voler la base des comptes AD en copiant le fichier NTDS.dit à chaud
+- Empoisonner le DNS d'Active Directory pour détourner les connexions
+E: Tout utilisateur du domaine peut demander ces tickets. Parade : mots de passe longs et aléatoires pour les comptes de service (ou gMSA).
+
+Q: Qu'est-ce qu'un gMSA ?
++ Un compte de service géré par AD, au mot de passe auto-renouvelé
+- Un compte administrateur global du tenant Microsoft 365
+- Un groupe de sécurité réservé aux boîtes aux lettres partagées
+- Un compte invité temporaire qui expire au bout de 24 heures
+E: Group Managed Service Account : plus de mot de passe de service écrit dans un fichier ni partagé entre admins.
+
+Q: Quelle commande PowerShell donne les membres d'un groupe AD ?
++ `Get-ADGroupMember "Admins du domaine"`
+- `Get-ADUser -Group "Admins du domaine"`
+- `net group list "Admins du domaine"`
+- `Show-ADGroup "Admins du domaine"`
+E: Réflexe d'audit : vérifier régulièrement qui est dans les groupes à privilèges (Admins du domaine, Administrateurs de l'entreprise).
+
+## soc
+
+Q: Quel identifiant d'événement Windows correspond à un échec de connexion ?
++ 4625
+- 4624
+- 4720
+- 4688
+E: 4625 en masse sur un compte = force brute ; sur beaucoup de comptes avec peu d'essais chacun = password spraying.
+
+Q: Quel identifiant d'événement Windows signale la création d'un compte utilisateur ?
++ 4720
+- 4625
+- 4672
+- 1102
+E: Un compte créé en dehors du processus normal (hors ticket, la nuit) est un signe de persistance d'un attaquant.
+
+Q: Quel identifiant d'événement Windows signale l'ajout d'un membre à un groupe global de sécurité ?
++ 4728
+- 4624
+- 4740
+- 7045
+E: Ajout dans un groupe local : 4732, universel : 4756. 4740 = compte verrouillé. Une alerte sur l'ajout aux groupes d'admins est indispensable.
+
+Q: Que signifie l'événement Windows 4740 ?
++ Un compte utilisateur a été verrouillé
+- Un compte utilisateur a été supprimé
+- Un nouveau service a été installé
+- Le journal de sécurité a été effacé
+E: Beaucoup de 4740 d'un coup peuvent révéler une attaque par force brute, ou un ancien mot de passe enregistré sur un téléphone.
+
+Q: Qu'est-ce que Splunk ?
++ Une plateforme commerciale d'analyse de logs, utilisée en SIEM
+- Un antivirus d'entreprise géré depuis une console centrale
+- Un pare-feu applicatif placé devant les serveurs web
+- Un outil de gestion des tickets pour le support utilisateur
+E: On y écrit des recherches en SPL (Search Processing Language). Exemple : `index=windows EventCode=4625 | stats count by user`.
+
+Q: Dans une recherche SPL Splunk, que fait `| stats count by src_ip` ?
++ Compte les événements par adresse IP source
+- Supprime les doublons d'adresses IP
+- Trie les événements par heure
+- Bloque les adresses IP trouvées
+E: Le pipe `|` enchaîne les traitements comme dans le shell. `| sort -count` trie ensuite du plus fréquent au moins fréquent.
+
+Q: Qu'est-ce que la gestion des vulnérabilités ?
++ Un cycle continu : découvrir, évaluer, prioriser, corriger, vérifier
+- Un audit unique, fait une fois par an par un cabinet externe
+- L'installation et la mise à jour d'un antivirus sur chaque poste
+- La rédaction d'un rapport d'incident après une attaque réussie
+E: Outils de scan : Nessus, Qualys, OpenVAS, Rapid7. Le rôle d'analyste : qualifier les résultats et suivre les corrections avec les équipes.
+
+Q: Comment prioriser une vulnérabilité au-delà du score CVSS ?
++ Selon l'exposition de l'actif, son importance et l'exploitation active
+- En traitant toujours en premier la CVE publiée le plus récemment
+- En ne traitant que les vulnérabilités dont le score CVSS vaut 10
+- En suivant l'ordre alphabétique des logiciels du parc à corriger
+E: Une CVE 7.5 exploitée activement sur un serveur exposé à Internet passe avant une CVE 9.8 sur un poste isolé. Sources : catalogue CISA KEV, score EPSS.
+
+Q: Qu'est-ce qu'un faux négatif en détection ?
++ Une vraie attaque passée sans aucune alerte
+- Une alerte déclenchée sans menace réelle
+- Une alerte fermée trop vite par un analyste
+- Une alerte reçue deux fois par le SIEM
+E: C'est le cas le plus dangereux. On le découvre par le threat hunting, les tests d'intrusion ou les exercices Purple Team.
+
+Q: Que veut dire « qualifier une alerte » pour un analyste SOC ?
++ Dire si elle est vraie, mesurer son impact, puis décider de la suite
+- Lui attribuer une note de qualité sur 10 dans l'outil du SOC
+- La transférer immédiatement au client sans aucune analyse
+- La fermer rapidement pour faire baisser la file d'attente
+E: On rassemble le contexte (qui, quoi, quand, quel actif), on cherche d'autres traces, on documente et on escalade si besoin.
+
+Q: Une remédiation de vulnérabilité est annoncée comme faite. Que doit faire l'analyste ?
++ Vérifier par un nouveau scan que la faille est corrigée, puis clore
+- Clore le ticket sur la parole de l'équipe, sans rien vérifier
+- Attendre le prochain scan trimestriel pour le constater
+- Supprimer la vulnérabilité de l'outil de scan pour la masquer
+E: « Faire confiance, mais vérifier. » Un correctif peut être incomplet (redémarrage manquant, autre version vulnérable).
+
+Q: Qu'est-ce qu'une exception (dérogation) de vulnérabilité ?
++ L'acceptation écrite et limitée dans le temps d'un risque non corrigé
+- Une vulnérabilité ignorée sans justification ni date de revue
+- Une faille découverte en dehors des campagnes de scan habituelles
+- Une vulnérabilité corrigée directement par l'éditeur du logiciel
+E: Elle précise la raison, les mesures de compensation (isolement, surveillance), le responsable qui accepte le risque et une date de revue.
+
+## sec
+
+Q: Qu'est-ce que l'EPSS ?
++ Un score de probabilité d'exploitation dans les 30 jours
+- Un format standard pour échanger les journaux de sécurité
+- Un protocole de chiffrement des échanges entre serveurs
+- Un nouveau score de gravité qui remplace le score CVSS
+E: Complémentaire au CVSS (gravité) : l'EPSS aide à prioriser ce qui sera probablement attaqué.
+
+Q: Qu'est-ce que le catalogue CISA KEV ?
++ La liste des failles dont l'exploitation réelle est confirmée
+- La liste des logiciels interdits dans l'administration américaine
+- Une base de signatures utilisée par les antivirus du marché
+- Une norme de chiffrement imposée aux entreprises américaines
+E: Known Exploited Vulnerabilities : un critère fort de priorité. Si une CVE de ton parc y figure, elle passe en tête.
+
+Q: Qu'est-ce que la segmentation réseau ?
++ Découper le réseau en zones séparées, filtrées par un pare-feu
+- Couper tout le réseau de l'entreprise en cas d'attaque détectée
+- Partager équitablement la bande passante entre les utilisateurs
+- Diviser physiquement un câble réseau en deux liaisons distinctes
+E: Exemple du lab M3 : LAN, VLAN SERVERS en default deny. Elle limite le mouvement latéral d'un attaquant.
+
+## scen
+
+Q: Une règle de blocage vient d'être créée mais le trafic passe toujours. Premier réflexe ?
++ Vérifier l'ordre des règles et, dans les logs, quelle règle a traité le paquet
+- Redémarrer le pare-feu pour que la nouvelle règle soit prise en compte
+- Supprimer toutes les autres règles de l'interface pour isoler la nouvelle
+- Désactiver le pare-feu le temps de comprendre ce qui ne va pas
+E: Cas réel du lab M3 : une autorisation générale (séquence 1) passait avant le blocage (séquence 111).
+
+Q: Le PC hôte perd Internet juste après une modification réseau d'un lab. Démarche ?
++ Regarder les routes par défaut, puis `tracert` pour suivre les paquets
+- Réinstaller les pilotes de la carte réseau principale du PC
+- Redémarrer la box Internet et attendre que la connexion revienne
+- Appeler le fournisseur d'accès pour signaler une panne de ligne
+E: Au M3, `tracert` montrait une boucle entre 10.10.10.1 et 172.22.128.1 : une 2ᵉ passerelle par défaut sur la carte du lab.
+
+Q: Tu dois modifier la configuration réseau d'un serveur distant. Comment éviter de perdre l'accès ?
++ Un retour arrière automatique (netplan try, minuterie) et une console de secours
+- Faire la modification le plus vite possible, sans test préalable
+- Couper le service SSH pendant toute la durée de la modification
+- Prévenir les utilisateurs une fois la modification terminée
+E: Comme le filet de sécurité nftables du M2 ou la console d'OPNsense au M3.
+
+Q: Une analyse de vulnérabilités remonte 2 000 résultats. Par où commencer ?
++ Par les failles exploitées sur les actifs exposés et critiques
+- Par ordre alphabétique des noms de serveurs concernés
+- Par les failles les plus anciennes, publiées il y a des années
+- Par les postes de travail les moins importants, plus faciles
+E: Croiser gravité (CVSS), exploitation (KEV, EPSS), exposition (Internet, DMZ) et importance de l'actif. Regrouper aussi par correctif : un seul patch règle souvent des dizaines de lignes.
+
+Q: Une équipe refuse d'appliquer un correctif critique car il risque de casser une application. Que proposer ?
++ Tester en préproduction, prévoir un retour arrière, et compenser en attendant
+- Forcer le correctif en production sans prévenir l'équipe concernée
+- Fermer le ticket avec le statut « refusé » et passer à la suite
+- Ignorer définitivement la vulnérabilité pour cette application
+E: Le rôle de coordination : trouver un chemin sûr, pas imposer ni abandonner. Mesures de compensation possibles : isoler, filtrer, surveiller.
+
+Q: Une alerte Splunk signale une connexion réussie d'un admin à 3 h du matin depuis un pays inhabituel. Que fais-tu ?
++ Le traiter comme suspect : vérifier avec lui, examiner la session, escalader
+- L'ignorer : les administrateurs travaillent parfois en pleine nuit
+- Supprimer le compte de l'administrateur sans chercher à comprendre
+- Attendre le lendemain matin pour lui en parler à son arrivée
+E: Contexte inhabituel (heure, lieu, compte à privilèges) = alerte prioritaire. Si ce n'est pas lui : révoquer les sessions et réinitialiser.
+
+## itil
+
+Q: Qu'est-ce que le MTTR ?
++ Le temps moyen pour rétablir un service après une panne
+- Le temps moyen qui sépare deux pannes du même service
+- Le nombre moyen de tickets traités par technicien et par jour
+- Le temps moyen de réponse du support au téléphone
+E: Mean Time To Restore (ou Repair). Le MTBF (Mean Time Between Failures) mesure le temps moyen entre deux pannes.
+
+Q: Qu'est-ce qu'un CAB ?
++ Le comité qui évalue et approuve les changements importants
+- Le contrat de niveau de service signé avec un fournisseur
+- La base de données qui recense les éléments de configuration
+- L'équipe du support de niveau 1 qui reçoit les appels
+E: Change Advisory Board. Il examine le risque, le plan de retour arrière et le créneau.
+
+## script
+
+Q: Que fait `$(commande)` en bash ?
++ Remplace l'expression par la sortie de la commande
+- Lance la commande en arrière-plan, sans attendre
+- Exécute la commande avec les droits de root
+- Crée une variable vide qui porte le nom de la commande
+E: Exemple du lab : `G=$(getent ahostsv4 github.com | awk 'NR==1{print $1}')` met la première IP de GitHub dans la variable G.
+
+Q: Dans awk, que fait `NR==1{print $1}` ?
++ Affiche le premier champ de la première ligne seulement
+- Affiche toutes les lignes qui contiennent 1
+- Affiche la première colonne de toutes les lignes
+- Compte le nombre de lignes
+E: `NR` = numéro de la ligne en cours. Sans condition, `{print $1}` traiterait toutes les lignes.
+
+Q: Que fait `getent ahostsv4 github.com` ?
++ Les IPv4 de github.com, vues comme par une application
+- La page d'accueil de github.com, téléchargée en local
+- Le résultat d'un test de connexion au port 443 de github.com
+- Une purge du cache DNS pour le seul nom github.com
+E: `getent` passe par le même chemin que les applications (fichier hosts puis DNS), contrairement à `dig` qui interroge seulement le DNS.
+
+Q: À quoi sert une API REST d'un équipement (pare-feu, hyperviseur) ?
++ Piloter l'équipement par script ou par Ansible, sans cliquer
+- Remplacer complètement l'interface web par une console
+- Chiffrer toutes les communications de l'équipement réseau
+- Sauvegarder automatiquement l'équipement dans le cloud
+E: OPNsense, Proxmox, Zabbix, Wazuh ont tous une API. L'interface web d'OPNsense l'utilise elle-même (`/api/firewall/filter/…`).
+
+Q: Comment s'authentifie-t-on en général à l'API d'OPNsense ?
++ Avec une clé et un secret d'API, en authentification HTTP Basic
+- Avec le mot de passe root envoyé en clair dans l'adresse de l'URL
+- Sans authentification, à condition d'être connecté depuis le LAN
+- Avec une clé SSH déposée dans le dossier personnel de root
+E: System → Access → Users → API keys. On crée un utilisateur dédié avec seulement les droits nécessaires, comme pour tout compte de service.

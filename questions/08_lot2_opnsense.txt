@@ -1,0 +1,213 @@
+## opn
+
+Q: Sur quel système d'exploitation repose OPNsense ?
++ FreeBSD
+- Debian
+- Alpine Linux
+- OpenBSD
+E: OPNsense est basé sur FreeBSD et utilise son moteur de pare-feu pf (venu à l'origine d'OpenBSD). pfSense repose aussi sur FreeBSD.
+
+Q: Où OPNsense garde-t-il toute sa configuration ?
++ Dans un seul fichier XML, `/conf/config.xml`
+- Dans une base de données PostgreSQL
+- Dans des centaines de fichiers sous `/etc`
+- Dans le registre du système
+E: Interfaces, règles, alias, utilisateurs, certificats, VPN : tout est dans ce fichier. Le restaurer recrée le pare-feu à l'identique.
+
+Q: Pourquoi chiffrer la sauvegarde `config.xml` d'OPNsense ?
++ Elle contient des secrets : hachés, clés privées, clés VPN
+- OPNsense refuse de restaurer un fichier qui n'est pas chiffré
+- Le chiffrement réduit fortement la taille du fichier XML
+- Le XML n'est lisible par OPNsense qu'une fois chiffré
+E: Dans le lab, la sauvegarde téléchargée n'était pas chiffrée : acceptable pour s'entraîner, pas en entreprise.
+
+Q: Quel identifiant et quel mot de passe ouvrent l'installateur sur l'ISO OPNsense ?
++ `installer` / `opnsense`
+- `root` / `root`
+- `admin` / `admin`
+- `opnsense` / `installer`
+E: `root` / `opnsense` donne la console du système live. Attention au clavier AZERTY : la console est en QWERTY, il faut taper `instqller`.
+
+Q: Pourquoi le message « pager read error » est-il apparu après l'installation dans le lab ?
++ L'ISO a été éjectée pendant que le système live l'utilisait
+- Le disque virtuel de 20 Go était trop petit pour l'installation
+- La RAM de 2 Go était insuffisante pour l'installateur d'OPNsense
+- Secure Boot était resté activé dans le microprogramme de la VM
+E: Le système live relit ses programmes sur le DVD. Ordre à retenir : arrêter (Halt), éjecter, démarrer sur le disque.
+
+Q: Pourquoi désactiver Secure Boot pour une VM OPNsense Gen 2 sous Hyper-V ?
++ Le chargeur de FreeBSD n'est pas signé avec les clés Microsoft
+- Parce que Secure Boot ralentit fortement le trafic des pare-feux
+- Parce qu'OPNsense ne démarre qu'en mode BIOS classique (Gen 1)
+- Parce que Secure Boot désactive les cartes réseau virtuelles hn
+E: Sans ça, la VM refuse de démarrer sur l'ISO.
+
+Q: Comment FreeBSD nomme-t-il les cartes réseau d'une VM Hyper-V ?
++ `hn0`, `hn1`…
+- `eth0`, `eth1`…
+- `ens33`, `ens34`…
+- `em0`, `em1`…
+E: Le pilote Hyper-V Network (hn). Sur du matériel réel : `igb`, `ix`, `em` selon la carte. Sous Linux moderne : `eth0`, `ens…`, `enp…`.
+
+Q: Au premier démarrage du lab, OPNsense affichait `LAN (hn0)` et `WAN (hn1)`. Quel était le problème ?
++ Cartes inversées : hn0 est sur le Default Switch, donc c'est le WAN
+- Rien : OPNsense choisit toujours le meilleur ordre des cartes
+- Rien : par convention, le LAN est toujours la première carte hn0
+- Il manquait une 3ᵉ carte réseau pour le réseau d'administration
+E: On corrige avec l'option 1 de la console (Assign interfaces), en vérifiant les adresses MAC avec `Get-VMNetworkAdapter`.
+
+Q: Quelle option du menu console d'OPNsense permet de changer l'IP du LAN ?
++ 2) Set interface IP address
+- 1) Assign interfaces
+- 4) Reset to factory defaults
+- 11) Reload all services
+E: Option 1 = choisir quelle carte est WAN/LAN ; option 2 = l'adressage. La console est la porte de secours si l'interface web est inaccessible.
+
+Q: Pourquoi le LAN du lab est-il en 10.10.10.0/24 et pas en 192.168.1.0/24 (valeur par défaut) ?
++ La box utilise déjà 192.168.1.0/24 : les réseaux se chevauchaient
+- OPNsense refuse 192.168.1.0/24 sur un LAN virtuel Hyper-V
+- 10.10.10.0/24 contient beaucoup plus d'adresses que 192.168.1.0/24
+- 192.168.1.0/24 est réservé par OPNsense à l'interface WAN
+E: Deux réseaux reliés ne doivent jamais se chevaucher, sinon les machines ne savent plus par où envoyer les paquets.
+
+Q: À quoi sert la règle « anti-lockout » d'OPNsense ?
++ Garder l'accès web depuis le LAN, même avec une règle trop large
+- Bloquer les attaques par force brute venant de l'interface WAN
+- Empêcher les postes du LAN de sortir librement sur Internet
+- Verrouiller l'interface web en dehors des heures de travail
+E: Elle autorise les ports 80 et 443 vers le pare-feu sur le LAN. On peut la désactiver seulement après avoir créé une règle d'accès admin explicite.
+
+Q: Dans OPNsense 26.7, quel service DHCP est activé par défaut quand on active le DHCP depuis la console sur une installation neuve ?
++ Dnsmasq
+- ISC DHCP
+- Kea
+- Unbound
+E: Vu dans le lab : le bail de node1 apparaissait dans « Dnsmasq DNS & DHCP → Leases ». ISC DHCP est en fin de vie ; Kea est l'autre option moderne. Unbound est le résolveur DNS.
+
+Q: Que montre l'écran Firewall → Log Files → Live View ?
++ Le journal en direct des paquets passés et bloqués, avec leur règle
+- La liste des administrateurs connectés à l'interface web en ce moment
+- Les mises à jour disponibles pour le pare-feu et ses plugins
+- Le débit de chaque interface en Mo/s, sous forme de graphique
+E: Réflexe n°1 pour dépanner. Une règle sans « Log » coché n'y apparaît pas.
+
+Q: Que veut dire le libellé « let out anything from firewall host itself » dans Live View ?
++ Le trafic émis par le pare-feu (ou après NAT) a le droit de sortir
+- Le pare-feu bloque tout le trafic sortant vers Internet
+- Un utilisateur du LAN a désactivé le filtrage du pare-feu
+- Une règle personnalisée autorise tout le LAN vers le WAN
+E: Règle automatique sur le WAN en sortie. On y voit par exemple les requêtes NTP (port 123) du pare-feu.
+
+Q: Qu'est-ce qu'un alias dans OPNsense ?
++ Un nom réutilisable pour un groupe d'IP, de réseaux ou de ports
+- Un second nom DNS attribué au pare-feu sur le réseau local
+- Un compte administrateur secondaire avec des droits réduits
+- Une copie de sauvegarde d'une règle avant sa modification
+E: Exemples du lab : `PORTS_SSH` (port 22) et `SRV_TEST` (hôte 1.1.1.1). Équivalent des « address objects » de Fortinet.
+
+Q: Dans quel menu crée-t-on un VLAN dans OPNsense récent ?
++ Interfaces → Devices → VLAN
+- Firewall → Aliases → VLAN
+- System → Settings → VLAN
+- Services → DHCP → VLAN
+E: On choisit l'interface parente (hn1) et le tag (20). Il faut ensuite l'affecter (Interfaces → Assignments), puis l'activer et lui donner une IP.
+
+Q: Dans le lab, le VLAN 20 était affecté à OPT1, mais rien ne marchait. Pourquoi ?
++ OPT1 n'était ni activée ni configurée avec une IP
+- Le tag 20 est réservé par Hyper-V pour ses propres VLAN
+- Il fallait redémarrer le pare-feu pour créer le VLAN
+- Les VLAN ne fonctionnent pas sous FreeBSD dans une VM
+E: Trois étapes, toutes nécessaires : créer le VLAN, l'affecter à une interface, puis activer cette interface avec une IP (10.10.20.1/24).
+
+Q: Qu'est-ce que CARP dans OPNsense ?
++ Une IP virtuelle partagée par deux pare-feux (haute dispo)
+- Un protocole de chiffrement utilisé par les VPN IPsec
+- Un outil de sauvegarde automatique de la configuration
+- Une liste de blocage d'adresses mise à jour chaque jour
+E: Avec pfsync (synchronisation des états) et la synchro de configuration, le pare-feu de secours prend la main sans couper les connexions. Équivalent du HA FortiGate.
+
+Q: Quel outil d'OPNsense fournit la détection d'intrusion (IDS/IPS) ?
++ Suricata
+- Unbound
+- Dnsmasq
+- Monit
+E: Services → Intrusion Detection. En IDS il alerte, en IPS il bloque. Monit surveille les services du pare-feu.
+
+Q: Quelle différence entre un Port Forward et l'Outbound NAT ?
++ Port Forward : publier un service interne ; Outbound NAT : faire sortir le LAN
+- Port Forward : faire sortir le LAN ; Outbound NAT : publier un service interne
+- Aucune : ce sont deux noms pour le même mécanisme de traduction d'adresses
+- Port Forward ne concerne que l'IPv4 ; Outbound NAT ne concerne que l'IPv6
+E: Port Forward = DNAT (on change la destination) ; Outbound NAT = SNAT (on change la source). En automatique par défaut pour la sortie.
+
+Q: Quelle traduction Fortinet → OPNsense est correcte ?
++ Address object → alias ; VIP → port forward ; FortiGate HA → CARP
+- Policy → alias ; VIP → CARP ; address object → rule
+- Policy → VLAN ; VIP → Suricata ; HA → alias
+- Address object → interface ; VIP → DHCP ; HA → Live View
+E: Et aussi : policy → rule, FortiView/log → Live View, IPS → Suricata. Phrase utile en entretien quand on a l'expérience Fortinet.
+
+Q: Pourquoi faire un point de contrôle Hyper-V de la VM OPNsense à la fin du lab ?
++ Pour revenir à un état propre avant une expérience risquée
+- Parce qu'il remplace la sauvegarde de config.xml
+- Pour accélérer le démarrage de la VM
+- Pour libérer de l'espace disque
+E: `Checkpoint-VM -Name OPN -SnapshotName 'M3-ok'`, dans PowerShell Windows (pas dans une VM Linux). Ce n'est pas une sauvegarde : il dépend du disque d'origine.
+
+Q: Quel test inoffensif déclenche une alerte Suricata connue ?
++ `curl http://testmynids.org/uid/index.html`
+- `ping -c 100 -s 1400 testmynids.org`
+- `nmap -sV -p 1-1000 10.10.10.1`
+- `dig +trace testmynids.org ANY`
+E: La page imite le résultat de la commande `id` en root. La règle « GPL ATTACK_RESPONSE id check returned root » la détecte.
+
+Q: Pourquoi Suricata ne voit-il pas le contenu des pages HTTPS ?
++ Le trafic est chiffré : il ne voit que SNI, certificats et tailles
+- Parce qu'il n'analyse que le trafic UDP, jamais le trafic TCP
+- Parce qu'il faut un abonnement payant pour analyser le HTTPS
+- Parce que le HTTPS contourne l'interface surveillée par l'IDS
+E: D'où l'intérêt de croiser avec les logs DNS, les proxies et l'EDR des postes.
+
+## lab
+
+Q: Dans le lab M3, pourquoi `sudo netplan apply` ne rendait-il pas la main ?
++ Il redémarrait aussi eth0, qui portait la session `multipass shell`
+- Le fichier YAML contenait une erreur d'indentation sur eth1
+- OPNsense bloquait les requêtes DHCP envoyées par node1
+- netplan attend toujours une confirmation avant de rendre la main
+E: La config était quand même appliquée (eth1 en 10.10.10.175). Sur un serveur distant : `netplan try`.
+
+Q: Quelle IP node1 a-t-il reçue sur le LAN d'OPNsense pendant le lab ?
++ 10.10.10.175 (dans la plage DHCP .100 à .199)
+- 10.10.10.1 (l'adresse du pare-feu sur le LAN)
+- 10.10.10.50 (l'adresse fixe de la carte Windows)
+- 172.22.136.88 (l'adresse du WAN d'OPNsense)
+E: 10.10.10.1 = OPNsense, 10.10.10.50 = la carte LAB-LAN de Windows en IP fixe, 172.22.136.88 = le WAN d'OPNsense.
+
+Q: Comment as-tu branché node1 sur le switch LAB-LAN sans l'éteindre ?
++ `Add-VMNetworkAdapter -VMName node1 -SwitchName LAB-LAN`
+- `multipass network add node1 --switch LAB-LAN --live`
+- `multipass launch --name node1 --network LAB-LAN`
+- `sudo ip link add eth1 type veth peer LAB-LAN`
+E: Ajout à chaud d'une carte réseau à une VM Hyper-V Gen 2. Multipass gère node1 comme une VM Hyper-V ordinaire.
+
+Q: Pourquoi le collage de plusieurs lignes PowerShell a-t-il échoué au début du M3 ?
++ Les lignes ont tourné à l'envers : `Start-VM` avant `New-VM`
+- PowerShell n'accepte qu'une seule commande par session
+- Les commandes Hyper-V exigent de redémarrer le PC avant
+- Le fichier ISO était introuvable dans le dossier indiqué
+E: Correctif : une seule ligne avec des `;`, ou un script `.ps1`. Toujours vérifier la première erreur, pas la dernière.
+
+Q: Où était réellement le fichier ISO d'OPNsense après l'extraction ?
++ Dans un dossier du même nom que l'ISO, créé par 7-Zip
+- Directement dans le dossier Téléchargements de Windows
+- Dans le dossier des disques virtuels de Hyper-V
+- Encore compressé au format `.bz2`, jamais extrait
+E: `X:\Downloads\OPNsense-26.7-dvd-amd64.iso\OPNsense-26.7-dvd-amd64.iso`. Réflexe : `Get-ChildItem -Recurse` pour trouver le vrai chemin.
+
+Q: Dans le lab, quel bruit réseau voyait-on bloqué sur le WAN d'OPNsense ?
++ Le broadcast UDP 21027 de Syncthing, venant du PC
+- Une attaque par force brute venant d'Internet
+- Les requêtes DNS envoyées par node1 vers le WAN
+- Le trafic HTTPS de l'interface web d'OPNsense
+E: Déjà vu au M2 avec nftables. Savoir reconnaître le bruit normal évite de crier à l'attaque.

@@ -1,0 +1,315 @@
+## subnet
+
+Q: Quelle est l'adresse de broadcast de 10.0.0.0/22 ?
++ 10.0.3.255
+- 10.0.0.255
+- 10.0.1.255
+- 10.0.4.255
+E: /22 = 255.255.252.0, pas de 4 dans le 3ᵉ octet : 0 à 3. Le broadcast est donc 10.0.3.255 et les hôtes vont de 10.0.0.1 à 10.0.3.254.
+
+Q: Combien d'hôtes utilisables dans un /29 ?
++ 6
+- 8
+- 14
+- 4
+E: 3 bits d'hôte → 2³ = 8 adresses − 2 = 6. Masque 255.255.255.248, blocs de 8.
+
+Q: Quel masque correspond à /21 ?
++ 255.255.248.0
+- 255.255.240.0
+- 255.255.252.0
+- 255.255.255.248
+E: /21 = 16 + 5 bits dans le 3ᵉ octet : 128 + 64 + 32 + 16 + 8 = 248. Bloc de 8 dans le 3ᵉ octet, 2046 hôtes.
+
+Q: Quelle est l'adresse réseau de 192.168.5.200/28 ?
++ 192.168.5.192
+- 192.168.5.200
+- 192.168.5.208
+- 192.168.5.128
+E: /28 → masque .240, pas de 16 : 192, 208… 200 est entre 192 et 207. Réseau .192, broadcast .207.
+
+Q: Quelle est la dernière adresse utilisable de 192.168.5.200/28 ?
++ 192.168.5.206
+- 192.168.5.207
+- 192.168.5.208
+- 192.168.5.254
+E: Bloc 192–207 : .207 est le broadcast, donc la dernière adresse d'hôte est .206.
+
+Q: 10.10.10.0/24 et 10.10.20.0/24 sont-ils le même réseau ?
++ Non : ce sont deux réseaux distincts, reliés par un routeur
+- Oui : ils commencent tous les deux par 10.10
+- Oui : le réseau 10.0.0.0/8 les contient tous les deux
+- Oui : s'ils sont branchés sur le même switch
+E: Avec un /24, les trois premiers octets doivent être identiques. C'est le cas du LAN (10.10.10.0/24) et du VLAN SERVERS (10.10.20.0/24) du lab M3 : OPNsense route entre les deux.
+
+Q: Quelle notation CIDR correspond au masque 255.255.255.240 ?
++ /28
+- /27
+- /29
+- /26
+E: 24 + 4 bits (128 + 64 + 32 + 16 = 240) = /28.
+
+Q: Quelle notation CIDR correspond au masque 255.255.254.0 ?
++ /23
+- /22
+- /24
+- /25
+E: 254 = 11111110 → 7 bits dans le 3ᵉ octet. 16 + 7 = /23 : 510 hôtes, blocs de 2 dans le 3ᵉ octet.
+
+Q: Combien de réseaux /24 tient un /20 ?
++ 16
+- 4
+- 8
+- 32
+E: 24 − 20 = 4 bits → 2⁴ = 16 réseaux /24. Le /20 du Default Switch (172.22.128.0/20) va de 172.22.128.0 à 172.22.143.255.
+
+Q: Le Default Switch du lab est en 172.22.128.0/20. Quelle est son adresse de broadcast ?
++ 172.22.143.255
+- 172.22.128.255
+- 172.22.255.255
+- 172.22.144.0
+E: Pas de 16 dans le 3ᵉ octet : 128 à 143. C'est l'adresse vue dans Live View : `172.22.143.255:21027`, le broadcast de Syncthing.
+
+Q: Il faut 120 hôtes. Quel est le plus petit préfixe qui convient ?
++ /25
+- /26
+- /24
+- /27
+E: /26 = 62 hôtes, trop petit. /25 = 126 hôtes, ça passe.
+
+Q: Il faut 1000 hôtes. Quel préfixe choisir ?
++ /22
+- /23
+- /21
+- /24
+E: /23 = 510, trop petit. /22 = 2¹⁰ − 2 = 1022 hôtes.
+
+Q: Quelle est l'adresse réseau de 172.16.35.10/19 ?
++ 172.16.32.0
+- 172.16.35.0
+- 172.16.0.0
+- 172.16.16.0
+E: /19 → masque 255.255.224.0, pas de 32 dans le 3ᵉ octet : 0, 32, 64… 35 tombe dans le bloc 32–63. Réseau 172.16.32.0, broadcast 172.16.63.255.
+
+Q: Quel est le nombre d'adresses dans un /16 ?
++ 65 536
+- 65 534
+- 16 384
+- 256
+E: 16 bits d'hôte → 2¹⁶ = 65 536 adresses, dont 65 534 utilisables.
+
+Q: En combien de /27 peut-on découper un /24 ?
++ 8
+- 4
+- 16
+- 32
+E: 3 bits empruntés (27 − 24) → 2³ = 8 sous-réseaux de 32 adresses : .0, .32, .64 … .224.
+
+Q: 192.168.1.127/25 : de quoi s'agit-il ?
++ L'adresse de broadcast du premier /25
+- Une adresse d'hôte valide du premier /25
+- L'adresse réseau du second /25
+- La passerelle par défaut du réseau
+E: /25 : blocs de 128. Le premier va de .0 (réseau) à .127 (broadcast). On ne peut pas l'attribuer à une machine.
+
+Q: Quelle plage IPv4 est réservée à la documentation (exemples dans les livres) ?
++ 192.0.2.0/24 (et 198.51.100.0/24, 203.0.113.0/24)
+- 192.168.0.0/24 (et 10.0.0.0/24, 172.16.0.0/24)
+- 127.0.0.0/24 (et 169.254.0.0/24, 0.0.0.0/24)
+- 100.64.0.0/24 (et 224.0.0.0/24, 240.0.0.0/24)
+E: RFC 5737 : TEST-NET-1, 2 et 3. On les utilise dans les exemples pour ne viser aucune vraie machine.
+
+Q: À quoi sert la plage 100.64.0.0/10 ?
++ Au CGNAT : des adresses partagées par les opérateurs
+- Aux adresses de boucle locale de chaque machine
+- Aux adresses attribuées quand le DHCP ne répond pas
+- Au multicast des protocoles de routage internes
+E: Le Carrier-Grade NAT : l'opérateur met plusieurs clients derrière une même IP publique. Tailscale utilise aussi cette plage. On la bloque aussi en entrée sur le WAN (règle « private networks » d'OPNsense).
+
+Q: Quelle est la plage d'adresses multicast IPv4 ?
++ 224.0.0.0/4
+- 240.0.0.0/4
+- 169.254.0.0/16
+- 239.0.0.0/24
+E: 224.0.0.0 à 239.255.255.255. 240.0.0.0/4 est réservé (classe E). 224.0.0.5/6 = OSPF, 224.0.0.251 = mDNS.
+
+Q: Une machine a l'IP 10.10.10.175/24 et la passerelle 10.10.20.1. Que se passe-t-il ?
++ Elle ne peut pas joindre sa passerelle, qui n'est pas dans son réseau
+- Elle fonctionne normalement, la passerelle peut être n'importe où
+- Elle passe automatiquement en 10.10.20.0/24
+- Elle utilise le DNS pour trouver la passerelle
+E: La passerelle doit être dans le même sous-réseau que la machine, sinon elle est injoignable directement (pas d'ARP possible). Erreur de saisie classique.
+
+## net
+
+Q: Quel type de switch Hyper-V relie les VM entre elles et à l'hôte, sans sortir sur le réseau physique ?
++ Interne
+- Externe
+- Privé
+- Par défaut
+E: Externe = pont vers la vraie carte réseau ; interne = VM + hôte (le LAB-LAN du M3) ; privé = VM seulement. Le Default Switch est un switch NAT géré par Windows.
+
+Q: Que signifie le préfixe d'adresse MAC 00:15:5d ?
++ Une carte réseau virtuelle Hyper-V (Microsoft)
+- Une carte réseau Intel physique
+- Une adresse MAC de broadcast
+- Une adresse MAC générée par VirtualBox
+E: Les 3 premiers octets (OUI) identifient le fabricant. C'est ce qu'OPNsense a affiché dans le bail DHCP de node1 (« Microsoft Corporation »). VirtualBox = 08:00:27.
+
+Q: Que fait le Default Switch de Hyper-V pour les VM ?
++ Il leur donne une IP par DHCP et les fait sortir par NAT derrière le PC
+- Il les relie directement au réseau de la box, comme des PC
+- Il les isole complètement de tout réseau
+- Il leur attribue des adresses IP publiques
+E: D'où le double NAT du lab : node1 → OPNsense → Windows → box. Son réseau change parfois au redémarrage du PC (172.17.48.0/20 puis 172.22.128.0/20).
+
+Q: Que dit le message `Reply from 172.22.128.1: TTL expired in transit` ?
++ Le paquet tourne en rond : boucle de routage
+- La machine de destination est éteinte
+- Le pare-feu a refusé le paquet en silence
+- Le serveur DNS met trop de temps à répondre
+E: Vu au M3 : Windows envoyait Internet vers OPNsense, qui le renvoyait à Windows. `tracert` montre les mêmes adresses qui reviennent en alternance.
+
+Q: Une machine a deux routes par défaut. Laquelle est utilisée ?
++ Celle avec la métrique la plus basse
+- Celle de la carte la plus récente
+- Les deux, à tour de rôle et de façon aléatoire
+- Celle avec la métrique la plus haute
+E: Au M3, `vEthernet (LAB-LAN)` (métrique 15) passait devant `Ethernet` (25) : tout Internet partait vers le lab. `Get-NetRoute 0.0.0.0/0` (Windows) ou `ip r` (Linux) pour vérifier.
+
+Q: Pourquoi une carte d'administration de lab doit-elle avoir une IP fixe sans passerelle ?
++ Pour joindre le lab sans détourner le trafic Internet de la machine
+- Parce qu'une IP fixe est plus rapide qu'une IP obtenue par DHCP
+- Parce que les cartes virtuelles refusent toute passerelle
+- Pour éviter que le pare-feu du lab bloque la carte de l'hôte
+E: Sans passerelle, la machine sait seulement que 10.10.10.0/24 est derrière cette carte. Le reste continue par la vraie passerelle.
+
+Q: Quelle route ajoute-t-on pour envoyer une seule IP par un autre routeur sous Linux ?
++ `sudo ip route add 1.1.1.1/32 via 10.10.10.1 dev eth1`
+- `sudo ip route default 1.1.1.1 dev eth1`
+- `sudo ip addr add 1.1.1.1/32 dev eth1`
+- `sudo route 1.1.1.1 gateway eth1 10.10.10.1`
+E: Une route /32 (une seule adresse) est la plus précise possible : le noyau la préfère à la route par défaut. `ip route get 1.1.1.1` montre la route choisie.
+
+Q: Que signifie `RTNETLINK answers: File exists` après `ip route add` ?
++ La route existe déjà
+- La carte réseau n'existe pas
+- La table de routage est pleine
+- La passerelle ne répond pas
+E: Vu au M3 : la commande avait été lancée deux fois. Sans gravité. `ip route replace` ajoute ou remplace sans erreur.
+
+Q: Dans netplan, que fait `dhcp4-overrides: use-routes: false` ?
++ La carte prend une IP par DHCP, mais ignore la passerelle reçue
+- La carte refuse le DHCP et garde l'adresse IP fixe du fichier
+- La carte n'utilise plus que les routes reçues par le DHCP
+- La carte désactive l'IPv4 et passe uniquement en IPv6
+E: Utilisé pour la carte eth1 de node1 au M3 : IP du LAN d'OPNsense, mais route par défaut conservée via eth0 (sinon perte de la session SSH).
+
+Q: Quelle commande netplan applique une config avec retour arrière automatique si on perd la main ?
++ `sudo netplan try`
+- `sudo netplan apply --safe`
+- `sudo netplan generate`
+- `sudo netplan test`
+E: `netplan try` annule le changement au bout de 120 secondes si on ne confirme pas. `netplan apply` applique sans filet : au M3, il a figé la session multipass.
+
+## nettroub
+
+Q: Un test vers un port donne un timeout. Est-ce la preuve que ta règle de pare-feu l'a bloqué ?
++ Non : la cible peut juste ne pas répondre ; il faut les logs et un témoin
+- Oui : un timeout vient toujours d'un pare-feu sur le chemin
+- Oui : à condition que le test ait été lancé deux fois de suite
+- Non : un timeout signifie toujours que le DNS est en panne
+E: Vu au M3 : `1.1.1.1:22` donnait un timeout, mais Live View montrait le paquet sortir sur le WAN. Il faut un **témoin positif** (GitHub répond sur le port 22).
+
+Q: Dans Live View d'OPNsense, que prouve une ligne `WAN out … 1.1.1.1:22 pass` ?
++ Le paquet est sorti vers Internet : il n'a pas été bloqué
+- Le paquet a été bloqué par une règle de l'interface WAN
+- Le paquet est arrivé depuis Internet vers le réseau local
+- Le pare-feu a ouvert lui-même une session SSH vers 1.1.1.1
+E: Une règle LAN qui bloque produit une ligne « LAN in … block », et le paquet n'atteint jamais le WAN.
+
+Q: Une page web répond `HTTP 403` à `curl`. Que peut-on dire du réseau ?
++ Il marche : le serveur a répondu, c'est un refus applicatif
+- Le pare-feu bloque le port HTTPS sur le chemin
+- Le DNS ne trouve pas l'adresse du serveur
+- Le serveur web est éteint ou débranché
+E: Un code HTTP vient toujours du serveur web. Un blocage réseau donne un timeout ou « connection refused ».
+
+Q: Après avoir activé le DHCP sur un LAN de lab, le PC hôte perd Internet. Cause la plus probable ?
++ Le PC a reçu une 2ᵉ passerelle plus prioritaire via la carte du lab
+- Le serveur DHCP du lab a saturé la carte réseau principale
+- Le pare-feu du lab bloque tout le trafic sortant du PC hôte
+- Le DHCP du lab a effacé la configuration DNS du PC hôte
+E: Correctif du M3 : IP fixe sans passerelle sur `vEthernet (LAB-LAN)`, puis vérifier qu'il ne reste qu'une route par défaut.
+
+Q: Le réseau du Default Switch est passé de 172.17.48.0/20 à 172.22.128.0/20. Conséquence ?
++ Les IP écrites en dur (hosts, règles, notes) sont devenues fausses
+- Rien : les VM gardent leurs anciennes adresses en mémoire
+- Les VM ne peuvent plus démarrer tant que le réseau a changé
+- Le NAT de Windows est désactivé jusqu'au prochain redémarrage
+E: D'où l'intérêt des noms DNS (`node1.mshome.net`), des réservations DHCP et des alias dans le pare-feu, plutôt que des IP en dur.
+
+Q: Quelle commande Windows montre les routes par défaut et leur interface ?
++ `Get-NetRoute -DestinationPrefix 0.0.0.0/0`
+- `Get-NetIPAddress -DefaultGateway all`
+- `ipconfig /routes /default /all`
+- `netsh interface show gateway all`
+E: Ou `route print`. Utile dès qu'on ajoute une carte virtuelle (VPN, Hyper-V, Docker) qui peut modifier la route par défaut.
+
+Q: `nc -zv -w3 serveur 22` répond `succeeded`. Que sait-on ?
++ La connexion TCP au port 22 a abouti : le port est ouvert
+- Le serveur a accepté le mot de passe SSH de l'utilisateur
+- Le port 22 est filtré par un pare-feu sur le chemin
+- Le serveur a répondu au ping, sans tester le port 22
+E: `-z` = tester sans envoyer de données, `-v` = détaillé, `-w3` = délai de 3 secondes. C'est le test de port le plus rapide sous Linux.
+
+Q: Pourquoi faut-il tester une règle de blocage **avant** et **après** l'avoir activée ?
++ Pour prouver que c'est la règle qui change le résultat
+- Parce qu'une règle ne s'active qu'au second test lancé
+- Pour remplir les logs du pare-feu avant une analyse
+- Pour vérifier que le pare-feu a assez de mémoire libre
+E: Méthode scientifique : un état de référence (ça passe), un changement (la règle), un nouvel état (ça bloque), et la preuve dans les logs.
+
+## fw
+
+Q: Deux règles « quick » correspondent au même paquet : une autorisation en séquence 1 et un blocage en séquence 111. Que se passe-t-il ?
++ Le paquet passe : la 1ʳᵉ règle quick qui correspond s'applique
+- Le paquet est bloqué : un blocage l'emporte toujours sur un pass
+- Les deux règles s'annulent et la politique par défaut s'applique
+- La règle créée le plus récemment est appliquée en premier
+E: Bug réel du lab M3 : « Default allow LAN to any » (séquence 1) passait avant la règle SSH (111). Correctif : mettre l'autorisation générale après (séquence 500).
+
+Q: Dans pf (OPNsense), que veut dire une règle sans l'option « quick » ?
++ L'évaluation continue, et c'est la dernière règle trouvée qui gagne
+- La règle est ignorée tant que l'option quick n'est pas cochée
+- La règle s'applique avant toutes les règles quick de l'interface
+- La règle ne produit aucune ligne dans les journaux du pare-feu
+E: Par défaut, pf retient la dernière règle qui correspond. « Quick » arrête l'évaluation dès la première correspondance. Les règles des interfaces OPNsense sont en quick.
+
+Q: Sur quelle interface faut-il placer une règle qui bloque le trafic des postes du LAN vers Internet ?
++ Sur le LAN : le paquet entre dans le pare-feu par le LAN
+- Sur le WAN : le paquet part ensuite vers Internet
+- Sur les deux interfaces, avec la même règle copiée
+- Dans les règles de NAT sortant de l'interface WAN
+E: Les règles filtrent le trafic qui **entre** par l'interface. Mettre la règle sur le WAN est l'erreur classique.
+
+Q: Pourquoi une nouvelle interface OPNsense (un VLAN, par exemple) bloque-t-elle tout au départ ?
++ Sans règle d'autorisation, le refus par défaut s'applique
+- Parce que l'interface n'est pas encore sauvegardée dans la config
+- Parce que le serveur DHCP n'est pas encore configuré dessus
+- Parce que les VLAN restent bloqués jusqu'au prochain redémarrage
+E: Seul le LAN de l'installation reçoit une règle « allow any ». Pour toute autre interface, on ouvre seulement le nécessaire (le DNS vers le pare-feu dans le lab).
+
+Q: Que fait la règle OPNsense « Block private networks from WAN » ?
++ Elle jette ce qui arrive sur le WAN avec une source privée
+- Elle empêche les postes du LAN d'utiliser des adresses privées
+- Elle bloque le NAT sortant vers les réseaux privés du WAN
+- Elle bloque l'interface web aux adresses privées du LAN
+E: Sur un vrai WAN, une source privée est forcément usurpée. Dans le lab, elle jetait le broadcast de Syncthing venant de Windows (172.22.128.1).
+
+Q: Que contient la table « sshlockout » d'OPNsense ?
++ Les IP bannies après trop d'échecs de connexion au pare-feu
+- La liste des ports SSH autorisés vers le pare-feu
+- Les clés SSH publiques des administrateurs du pare-feu
+- Les sessions SSH actuellement ouvertes sur le pare-feu
+E: Une protection intégrée contre la force brute, comparable à fail2ban, qui bloque l'accès au pare-feu lui-même (ports 22 et 443).

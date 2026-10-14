@@ -11,7 +11,7 @@ VERSION = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("QCM_VERSION", "d
 CATS = [
     ("lin", "Linux"), ("sysd", "systemd & logs"), ("users", "Comptes & droits"),
     ("disk", "Disques"), ("ssh", "SSH & durcissement"), ("net", "Réseau"),
-    ("subnet", "Sous-réseaux"), ("nettroub", "Dépannage réseau"), ("fw", "Pare-feu"),
+    ("subnet", "Sous-réseaux"), ("nettroub", "Dépannage réseau"), ("fw", "Pare-feu"), ("opn", "OPNsense"),
     ("sec", "Sécurité"), ("crypto", "Cryptographie"), ("soc", "SOC & SIEM"),
     ("virt", "Virtualisation"), ("ceph", "Ceph & stockage"), ("docker", "Docker"),
     ("k8s", "Kubernetes"), ("iac", "Ansible & IaC"), ("sup", "Supervision"),

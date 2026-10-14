@@ -2,7 +2,7 @@
 
 QCM de révision pour l'administration systèmes, le réseau et la cybersécurité, utilisable sur téléphone **sans connexion**.
 
-Plus de 440 questions sur 26 thèmes : Linux, systemd, SSH, réseau et sous-réseaux, pare-feu, sécurité, cryptographie, SOC/SIEM, virtualisation, Ceph, Docker, Kubernetes, Ansible, supervision, Windows/AD, scripts, Git, IA, ITIL, et des scénarios de dépannage. Le niveau visé est celui des certifications d'entrée (Linux Essentials / LPIC-1, Network+ / CCNA, Security+ / ISC2 CC, ITIL Foundation).
+Plus de 600 questions sur 27 thèmes : Linux, systemd, SSH, réseau et sous-réseaux, pare-feu, OPNsense, sécurité, cryptographie, SOC/SIEM, virtualisation, Ceph, Docker, Kubernetes, Ansible, supervision, Windows/AD, scripts, Git, IA, ITIL, et des scénarios de dépannage. Le niveau visé est celui des certifications d'entrée (Linux Essentials / LPIC-1, Network+ / CCNA, Security+ / ISC2 CC, ITIL Foundation).
 
 ## Utilisation
 

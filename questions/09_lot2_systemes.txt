@@ -1,0 +1,341 @@
+## lin
+
+Q: Quelle commande affiche les processus en temps réel, triés par usage CPU ?
++ `top`
+- `ps -t`
+- `jobs -l`
+- `pstree -c`
+E: Dans `top`, `M` trie par mémoire, `P` par CPU, `k` tue un processus, `q` quitte. `htop` est plus lisible.
+
+Q: Que fait `nohup commande &` ?
++ Lance la commande en fond, et elle survit à la fermeture du terminal
+- Lance la commande avec les droits root sans demander de mot de passe
+- Empêche la commande d'écrire quoi que ce soit dans les journaux
+- Programme la commande pour le prochain démarrage de la machine
+E: La sortie va dans `nohup.out`. Pour une vraie tâche durable : un service systemd, ou `tmux` / `screen` pour garder une session.
+
+Q: À quoi sert `tmux` ?
++ Garder des sessions de terminal qui survivent à une coupure SSH
+- Chiffrer une session SSH avec une seconde couche de protection
+- Surveiller la température du processeur pendant une compilation
+- Transférer des fichiers entre deux serveurs pendant une session
+E: `tmux new -s travail`, se détacher avec `Ctrl+B d`, revenir avec `tmux attach -t travail`. Indispensable pour une mise à jour longue sur un serveur distant.
+
+Q: Quelle commande copie un dossier vers un serveur distant en ne transférant que les différences ?
++ `rsync -avz dossier/ user@serveur:/chemin/`
+- `scp -diff dossier/ user@serveur:/chemin/`
+- `cp -r dossier/ user@serveur:/chemin/`
+- `ftp -sync dossier/ serveur`
+E: `-a` = garder droits et dates, `-v` = détaillé, `-z` = compresser. Attention au `/` final de la source, qui change le résultat.
+
+Q: Que fait `chmod +x script.sh` ?
++ Rend le fichier exécutable
+- Rend le fichier lisible par tous
+- Change le propriétaire du fichier
+- Supprime l'exécution pour tout le monde
+E: Ensuite `./script.sh`. Sans le droit `x`, on obtient « Permission denied ».
+
+Q: Quelle commande donne l'arborescence d'un dossier sous forme d'arbre ?
++ `tree`
+- `ls -tree`
+- `find -tree`
+- `dir /s`
+E: Paquet `tree`. `tree -L 2` limite à 2 niveaux. `dir /s` est l'équivalent sous Windows.
+
+Q: Comment voir les 10 plus gros dossiers sous `/var` ?
++ `sudo du -xh --max-depth=1 /var | sort -h | tail`
+- `sudo df -h --max-depth=1 /var | sort -h | tail`
+- `sudo ls -lSh --max-depth=1 /var | sort -h | head`
+- `sudo find /var -maxdepth 1 -size +10 | sort | tail`
+E: `du` additionne, `sort -h` trie les tailles lisibles (K, M, G), `tail` garde les plus grosses. `-x` reste sur le même système de fichiers.
+
+Q: Que fait `wc -l fichier` ?
++ Compte les lignes du fichier
+- Compte les mots du fichier
+- Affiche la dernière ligne du fichier
+- Supprime les lignes vides
+E: `wc -w` = mots, `wc -c` = octets. Exemple : `grep -c "Failed password" /var/log/auth.log` compte directement les lignes trouvées.
+
+Q: Que fait la commande `cut -d: -f1 /etc/passwd` ?
++ Le premier champ de chaque ligne : les noms des comptes
+- Il supprime le premier compte déclaré dans le fichier
+- Il affiche les mots de passe hachés de chaque compte
+- Il coupe le fichier en deux parties autour des « : »
+E: `-d:` = séparateur `:`, `-f1` = premier champ. Les mots de passe hachés sont dans `/etc/shadow`, pas dans `/etc/passwd`.
+
+Q: Que fait `sort -u` ?
++ Trie les lignes et supprime les doublons
+- Trie les lignes à l'envers
+- Trie les nombres du plus grand au plus petit
+- Mélange les lignes au hasard
+E: Équivalent de `sort | uniq`. `sort -r` inverse, `sort -n` trie numériquement, `shuf` mélange.
+
+Q: Quelle commande affiche la date et l'heure du système et l'état de la synchronisation NTP ?
++ `timedatectl`
+- `date --ntp`
+- `hwclock --sync`
+- `systemctl time`
+E: `timedatectl set-timezone Europe/Paris` change le fuseau. « System clock synchronized: yes » confirme la synchro NTP.
+
+## sysd
+
+Q: Comment voir les logs d'un service en direct, au fur et à mesure ?
++ `journalctl -u nginx -f`
+- `systemctl logs nginx --live`
+- `tail -f /etc/systemd/nginx`
+- `journalctl --follow-all nginx`
+E: `-f` = follow, comme `tail -f`. Utile pendant qu'on reproduit une erreur dans un autre terminal.
+
+Q: Que fait `systemctl mask nginx` ?
++ Il empêche le service de démarrer, même à la main ou par dépendance
+- Il cache le service dans la liste affichée par `systemctl status`
+- Il désactive seulement le démarrage automatique au boot du serveur
+- Il redémarre le service sans couper les connexions des clients
+E: Plus fort que `disable`. `systemctl unmask nginx` annule. Utile pour être sûr qu'un service dangereux ne revienne pas.
+
+Q: Comment surcharger un réglage d'un service sans modifier le fichier du paquet ?
++ `sudo systemctl edit nginx` (fichier de surcharge dans `nginx.service.d/`)
+- Modifier directement le fichier `/usr/lib/systemd/system/nginx.service`
+- Créer un fichier `nginx.override` dans le dossier de config `/etc/nginx`
+- Lancer `sudo systemctl set nginx` en passant le réglage en argument
+E: Même logique que `sshd_config.d/` et `jail.local` : on ne touche pas au fichier livré, qui serait écrasé par une mise à jour.
+
+Q: Que fait `Restart=on-failure` dans un service ?
++ Systemd relance le service automatiquement s'il s'arrête en erreur
+- Le service redémarre à chaque modification de sa configuration
+- Le service ne démarre qu'après une panne d'un autre service
+- Le serveur redémarre si le service plante
+E: Souvent combiné avec `RestartSec=5`. Attention : un service qui plante en boucle peut masquer un vrai problème.
+
+## users
+
+Q: Quelle commande change le mot de passe de l'utilisateur bob ?
++ `sudo passwd bob`
+- `sudo chpass bob`
+- `sudo usermod -p bob`
+- `sudo setpassword bob`
+E: Sans argument, `passwd` change ton propre mot de passe. `chage -l bob` montre les règles d'expiration du compte.
+
+Q: Que fait `sudo -i` ?
++ Ouvre un shell root complet, avec l'environnement de root
+- Affiche la liste des droits sudo de l'utilisateur courant
+- Installe sudo et l'active pour l'utilisateur courant
+- Relance en root la dernière commande tapée dans le shell
+E: À utiliser avec modération. `sudo -l` liste ce que l'utilisateur a le droit de faire avec sudo. `sudo !!` relance la dernière commande en root.
+
+Q: Où sont journalisées les commandes lancées avec sudo sur Ubuntu ?
++ Dans `/var/log/auth.log` (et le journal systemd)
+- Seulement dans le fichier `~/.bash_history` de l'utilisateur
+- Dans le fichier `/etc/sudoers`, à la suite des règles
+- Nulle part : sudo ne garde aucune trace des commandes
+E: Chaque ligne indique qui, quand, depuis quel terminal et quelle commande. C'est l'intérêt de sudo par rapport à une session root partagée.
+
+## disk
+
+Q: Quelle commande crée un système de fichiers ext4 sur `/dev/sdb1` ?
++ `sudo mkfs.ext4 /dev/sdb1`
+- `sudo fdisk -t ext4 /dev/sdb1`
+- `sudo mount -t ext4 /dev/sdb1`
+- `sudo format /dev/sdb1 ext4`
+E: Attention, cela efface les données de la partition. On crée d'abord la partition (`fdisk`, `parted`), puis le système de fichiers, puis on monte.
+
+Q: Que fait `sudo fsck /dev/sdb1` ?
++ Vérifie et répare le système de fichiers (partition démontée)
+- Formate la partition et recrée un système de fichiers vide
+- Mesure la vitesse de lecture et d'écriture de la partition
+- Chiffre la partition avec LUKS sans perdre les données
+E: Ne jamais lancer fsck sur une partition montée en écriture : risque de corruption.
+
+Q: Qu'est-ce que le swap ?
++ De l'espace disque utilisé comme mémoire de secours
+- Une copie de sauvegarde de la RAM sur le disque
+- Un cache en RAM qui accélère les accès au disque
+- Une partition réservée aux mises à jour du système
+E: `swapon --show` et `free -h` le montrent. Un serveur qui « swappe » beaucoup devient très lent : il manque de RAM.
+
+## ssh
+
+Q: Que fait `scp fichier.txt alice@node1:/tmp/` ?
++ Copie le fichier vers le dossier /tmp de node1, à travers SSH
+- Ouvre une session SSH dans /tmp
+- Déplace le fichier sur node1 et le supprime en local
+- Partage le fichier en lecture seule
+E: Même authentification que SSH (clé). `rsync` est plus efficace pour de gros volumes ou des copies répétées.
+
+Q: Qu'est-ce qu'un bastion (jump host) ?
++ Un serveur d'entrée unique et surveillé vers les autres serveurs
+- Un serveur de sauvegarde isolé du reste du réseau de l'entreprise
+- Un pare-feu matériel placé devant les serveurs les plus sensibles
+- Un serveur qui garde les clés privées de tous les administrateurs
+E: `ssh -J bastion serveur_interne`. Un seul point d'entrée à durcir, journaliser et protéger par MFA.
+
+Q: Que fait `ssh -v user@serveur` ?
++ Le détail de la connexion, pour déboguer un refus d'authentification
+- La version d'OpenSSH du serveur, sans ouvrir de vraie connexion
+- Une connexion en lecture seule, sans droit d'écrire sur le serveur
+- Une session compressée, plus rapide sur une connexion très lente
+E: On y voit les clés proposées et la raison du refus. `-vvv` pour encore plus de détails.
+
+## virt
+
+Q: Sur quel port est l'interface web de Proxmox VE ?
++ 8006 (HTTPS)
+- 443 (HTTPS)
+- 8080 (HTTP)
+- 9090 (HTTPS)
+E: `https://IP:8006`. Elle ne doit jamais être exposée sur Internet : VPN ou réseau d'administration.
+
+Q: Quelle commande Proxmox liste les VM d'un nœud ?
++ `qm list`
+- `pve vm list`
+- `pct list`
+- `virsh list`
+E: `qm` gère les VM (KVM), `pct` les conteneurs LXC. `virsh` est l'outil libvirt, qui n'est pas celui de Proxmox.
+
+Q: Quelle différence entre une VM et un conteneur LXC dans Proxmox ?
++ LXC partage le noyau de l'hôte ; la VM a son propre noyau (KVM)
+- La VM partage le noyau de l'hôte ; LXC a son propre noyau (KVM)
+- LXC ne fait tourner que Windows ; la VM ne fait tourner que Linux
+- Aucune : Proxmox utilise les deux noms pour la même technologie
+E: LXC = léger et rapide, mais uniquement Linux. Une VM peut faire tourner Windows, BSD (OPNsense) ou un autre noyau Linux.
+
+Q: Que faut-il activer sur la VM Hyper-V pour faire tourner Proxmox (et ses VM) à l'intérieur ?
++ La virtualisation imbriquée (`ExposeVirtualizationExtensions`)
+- La mémoire dynamique de Hyper-V, avec un minimum de 8 Go
+- Secure Boot avec le modèle « Microsoft UEFI Certificate »
+- Une seconde carte réseau branchée sur le Default Switch
+E: Sans ça, KVM ne trouve pas VT-x/AMD-V dans la VM. Il faut aussi `MacAddressSpoofing On` pour que les VM imbriquées accèdent au réseau.
+
+Q: Qu'est-ce que `vmbr0` dans Proxmox ?
++ Le pont réseau Linux où sont branchées les VM
+- Le premier disque virtuel de chaque VM du nœud
+- Le nom interne du cluster Proxmox du datacenter
+- La VM d'administration créée à l'installation
+E: Il est relié à la carte physique. On peut le rendre « VLAN aware » pour mettre chaque VM dans son VLAN.
+
+Q: Que fait `vzdump` dans Proxmox ?
++ Il sauvegarde une VM ou un conteneur dans une archive
+- Il migre une VM en marche vers un autre nœud du cluster
+- Il supprime les snapshots trop anciens de chaque VM
+- Il met à jour le noyau de Proxmox sans redémarrer
+E: Les sauvegardes planifiées de Proxmox utilisent vzdump. Proxmox Backup Server ajoute la déduplication et l'incrémental.
+
+## ceph
+
+Q: Que signifie l'état HEALTH_ERR dans Ceph ?
++ Un problème grave, à traiter immédiatement
+- Le cluster est en parfaite santé
+- Un simple avertissement, sans urgence
+- Une mise à jour de Ceph est disponible
+E: HEALTH_OK = tout va bien ; HEALTH_WARN = à surveiller ; HEALTH_ERR = urgence. `ceph health detail` donne la cause.
+
+Q: Qu'est-ce que MicroCeph ?
++ Un Ceph simplifié en snap, pour labs et petits clusters
+- Un Ceph limité à un seul disque et à un seul nœud
+- Un concurrent payant de Ceph, vendu par Red Hat
+- Le tableau de bord web officiel du cluster Ceph
+E: Prévu dans le lab sur la VM ceph1, avec des OSD sur des fichiers loop.
+
+Q: Pourquoi le réseau est-il critique pour un cluster Ceph ?
++ Chaque écriture est répliquée entre les nœuds par le réseau
+- Ceph stocke ses données sur des serveurs situés sur Internet
+- Ceph n'utilise jamais les disques locaux des serveurs
+- Il ne l'est pas : Ceph fonctionne très bien hors réseau
+E: En production : réseau dédié (souvent 10 à 25 Gb/s), parfois séparé en réseau public et réseau de réplication.
+
+## docker
+
+Q: Que fait `docker compose down -v` ?
++ Supprime conteneurs, réseaux et aussi les volumes (les données)
+- Arrête les conteneurs du projet sans rien supprimer du tout
+- Met à jour les images des conteneurs puis les relance tous
+- Sauvegarde les volumes du projet avant d'arrêter les conteneurs
+E: Le `-v` efface les volumes nommés : à éviter sans sauvegarde. Sans `-v`, les données restent.
+
+Q: Quelle commande montre l'utilisation CPU et mémoire des conteneurs en direct ?
++ `docker stats`
+- `docker top -all`
+- `docker inspect --usage`
+- `docker ps --stats`
+E: `docker top conteneur` liste les processus d'un conteneur ; `docker system df` montre l'espace disque utilisé.
+
+Q: Que fait `docker inspect nom` ?
++ Toute la configuration du conteneur en JSON (IP, volumes, variables)
+- Une analyse antivirus de l'image et des fichiers du conteneur
+- Un shell interactif ouvert à l'intérieur du conteneur en marche
+- Les dernières lignes des journaux écrits par l'application
+E: `docker inspect -f '{{.State.ExitCode}}' nom` pour une seule valeur. Attention, les variables d'environnement (parfois des secrets) y sont visibles.
+
+Q: Dans quel réseau Docker les conteneurs d'un même fichier Compose peuvent-ils se joindre par leur nom de service ?
++ Le réseau créé automatiquement par Compose pour le projet
+- Le réseau de l'hôte, partagé avec tous les autres conteneurs
+- Aucun : il faut toujours utiliser les adresses IP des conteneurs
+- Le réseau `none`, qui isole chaque conteneur du reste du monde
+E: Le DNS interne de Docker résout `db`, `web`… dans ce réseau. Sur le réseau `bridge` par défaut, la résolution par nom n'existe pas.
+
+## k8s
+
+Q: Quelle commande applique un fichier de manifeste Kubernetes ?
++ `kubectl apply -f deploy.yaml`
+- `kubectl run -f deploy.yaml`
+- `kubectl create pod deploy.yaml`
+- `kubectl start deploy.yaml`
+E: `apply` est déclaratif : on décrit l'état voulu, Kubernetes fait le nécessaire. `kubectl delete -f` supprime ce qui est décrit.
+
+Q: Quelle commande donne la liste des pods de tous les namespaces ?
++ `kubectl get pods -A`
+- `kubectl get pods --everything`
+- `kubectl list pods all`
+- `kubectl pods -n *`
+E: `-A` = `--all-namespaces`. `-o wide` ajoute l'IP et le nœud de chaque pod.
+
+Q: Qu'est-ce que Talos Linux ?
++ Un OS minimal et immuable, fait pour Kubernetes et géré par API
+- Une distribution Linux de bureau pensée pour les développeurs
+- Un outil de sauvegarde et de restauration des clusters Kubernetes
+- Un moteur de conteneurs concurrent de Docker et de containerd
+E: Il se pilote avec `talosctl`. Pas de shell ni de paquets à installer : la surface d'attaque est réduite au minimum.
+
+Q: Qu'est-ce qu'un Ingress dans Kubernetes ?
++ Une règle qui expose des services web par nom de domaine
+- Un volume de stockage partagé entre plusieurs pods
+- Un pod de surveillance présent sur chaque nœud
+- Une politique de sauvegarde automatique des pods
+E: Il s'appuie sur un contrôleur (nginx, Traefik). C'est l'équivalent d'un reverse proxy pour le cluster.
+
+Q: À quoi sert une NetworkPolicy ?
++ Filtrer quels pods ont le droit de communiquer entre eux
+- Donner une adresse IP publique à chaque pod du cluster
+- Limiter la bande passante utilisée par chaque pod
+- Chiffrer tout le trafic échangé entre les nœuds
+E: Par défaut, tous les pods peuvent se parler. Une politique « default deny » puis des ouvertures ciblées applique la segmentation au cluster.
+
+## iac
+
+Q: Dans un playbook Ansible, que signifie `become: true` ?
++ Les tâches s'exécutent avec des droits élevés (sudo) sur la cible
+- Le playbook devient la configuration par défaut de tous les hôtes
+- Les tâches s'exécutent en parallèle sur tous les hôtes à la fois
+- L'inventaire devient dynamique et se met à jour à chaque exécution
+E: L'équivalent de `sudo`. On peut aussi l'activer seulement pour certaines tâches.
+
+Q: À quoi sert un rôle Ansible ?
++ Un paquet réutilisable de tâches, modèles et variables
+- La définition des droits des utilisateurs d'Ansible
+- La liste des serveurs à configurer, rangés par groupe
+- Un coffre chiffré qui contient les mots de passe
+E: Structure standard : `tasks/`, `handlers/`, `templates/`, `defaults/`. On peut en trouver sur Ansible Galaxy.
+
+Q: Qu'est-ce qu'un template Jinja2 dans Ansible ?
++ Un fichier de config modèle, rempli avec des variables
+- Un playbook complet déjà écrit par la communauté
+- Un inventaire des serveurs écrit au format JSON
+- Un module qui installe les paquets d'un serveur
+E: Module `template` : `{{ ansible_hostname }}` devient le vrai nom de la machine. Pratique pour générer une config par serveur.
+
+Q: Qu'est-ce que SaltStack ?
++ Un outil de configuration avec un master et des minions
+- Un outil de supervision des serveurs et des services
+- Un orchestrateur de conteneurs concurrent de Kubernetes
+- Un outil de sauvegarde distribuée entre plusieurs sites
+E: Contrairement à Ansible (sans agent, par SSH), Salt utilise des minions connectés au master (ports 4505/4506). Les états sont écrits en YAML (fichiers `.sls`).
